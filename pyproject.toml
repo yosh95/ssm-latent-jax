@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ssm-latent-py"
+name = "ssm-latent-jax"
 version = "0.1.0"
-description = "JAX/Flax port of ssm-latent-rs: Mamba-3 (selective SSM) x JEPA latent world models for research and prototyping"
+description = "Mamba-3 (selective SSM) x JEPA latent world models in JAX/Flax for research, verification and prototyping"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -33,9 +33,10 @@ dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.6"]
 cuda = ["jax[cuda12]>=0.4.30"]
 
 [project.urls]
-Homepage = "https://github.com/yosh95/ssm-latent-py"
-Repository = "https://github.com/yosh95/ssm-latent-py"
-Sibling = "https://github.com/yosh95/ssm-latent-rs"
+Homepage = "https://github.com/yosh95/ssm-latent-jax"
+Repository = "https://github.com/yosh95/ssm-latent-jax"
+Rust = "https://github.com/yosh95/ssm-latent-rs"
+PyTorch = "https://github.com/yosh95/ssm-latent-py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ssm_latent"]

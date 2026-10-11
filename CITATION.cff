@@ -4,16 +4,16 @@ authors:
   - given-names: Yoshihiro
     family-names: Ando
     alias: yosh95
-title: "SSM Latent World Model (Python/JAX) - Mamba-3 x JEPA"
+title: "ssm-latent-jax - Mamba-3 x JEPA latent world models in JAX/Flax"
 abstract: >-
-  A JAX / Flax NNX port of ssm-latent-rs: Mamba-3 selective state space models
+  A JAX / Flax NNX implementation of ssm-latent-rs: Mamba-3 selective state space models
   integrated with a JEPA (Joint-Embedding Predictive Architecture) latent world
   model. Includes multi-scale SSM stacks, SIGReg (LeJEPA) collapse prevention,
   LeJEPA identifiability monitors (Theorems 1-4) and a Reptile meta-learning
   framework for evaluating adaptation speed (the SAI core metric).
 version: 0.1.0
 date-released: 2026-10-11
-repository-code: "https://github.com/yosh95/ssm-latent-py"
+repository-code: "https://github.com/yosh95/ssm-latent-jax"
 license: MIT
 keywords:
   - jax

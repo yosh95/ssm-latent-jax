@@ -1,21 +1,32 @@
-# SSM Latent World Model — Python (JAX) ⚡
+# ssm-latent-jax ⚡
 
-### Mamba-3 × JEPA latent world models for research, verification and prototyping
+### Mamba-3 × JEPA latent world models in JAX / Flax NNX
 
-[![CI](https://github.com/yosh95/ssm-latent-py/actions/workflows/ci.yml/badge.svg)](https://github.com/yosh95/ssm-latent-py/actions/workflows/ci.yml)
+[![CI](https://github.com/yosh95/ssm-latent-jax/actions/workflows/ci.yml/badge.svg)](https://github.com/yosh95/ssm-latent-jax/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org)
 [![JAX](https://img.shields.io/badge/JAX-%2BFlax%20NNX-9cf.svg)](https://github.com/google/jax)
 
-A **JAX / Flax NNX port of [`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs)** — the
-Rust (Burn) implementation of a Mamba-3 selective state-space model fused with a
-JEPA (Joint-Embedding Predictive Architecture) latent world model.
+A **JAX / Flax NNX implementation** of a Mamba-3 selective state-space model fused with
+a JEPA (Joint-Embedding Predictive Architecture) latent world model — a port of
+[`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) (Rust / Burn).
 
-> **Why a Python port?** Rust is excellent for deployment, but compile times and
-> the size of intermediate artefacts make it a poor fit for *iterating* on research
-> ideas. This package keeps the exact numerical semantics of the Rust reference
-> (including its quirks) while making the codebase explorable in a notebook, hackable
-> in one line, and verifiable with `pytest`.
+Sibling implementations of the same algorithms:
+
+| Language | Repository | Notes |
+|---|---|---|
+| 🦀 Rust (Burn) | [`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) | the reference; includes the WASM demos and meta-learning package |
+| 🔥 PyTorch | [`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) | *this repo did not start here* — a separate, smaller PyTorch port of `ssm.rs` + `latent.rs` lives there |
+| ⚡ JAX (this repo) | `ssm-latent-jax` | full port: SSM, JEPA, monitors, predictors, multimodal, meta-learning |
+
+> **Why a Python/JAX port at all?** Rust is excellent for deployment, but compile times
+> and the size of intermediate artefacts make it a poor fit for *iterating* on research
+> ideas. JAX additionally gives you a functional, composable core (`jit` / `grad` / `vmap`
+> / `lax.scan`) and XLA compilation for free.
+>
+> This package keeps the exact numerical semantics of the Rust reference — including its
+> quirks, see [`docs/PARITY.md`](docs/PARITY.md) — while making the codebase explorable in
+> a notebook, hackable in one line, and verifiable with `pytest`.
 
 ---
 
@@ -36,8 +47,8 @@ JEPA (Joint-Embedding Predictive Architecture) latent world model.
 ## 🚀 Install
 
 ```bash
-git clone https://github.com/yosh95/ssm-latent-py
-cd ssm-latent-py
+git clone https://github.com/yosh95/ssm-latent-jax
+cd ssm-latent-jax
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"        # CPU JAX; use ".[cuda]" for CUDA 12
 ```
@@ -197,13 +208,16 @@ MIT — see [LICENSE](LICENSE).
 ## 📖 Citation
 
 ```bibtex
-@software{ando2026ssmlatentpy,
-  title  = {SSM Latent World Model (Python/JAX): Mamba-3 x JEPA},
+@software{ando2026ssmlatentjax,
+  title  = {ssm-latent-jax: Mamba-3 x JEPA latent world models in JAX/Flax},
   author = {Ando, Yoshihiro},
   year   = {2026},
-  url    = {https://github.com/yosh95/ssm-latent-py}
+  url    = {https://github.com/yosh95/ssm-latent-jax}
 }
 ```
+
+If you specifically want the PyTorch implementation, cite
+[`yosh95/ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) instead.
 
 The algorithms themselves come from:
 

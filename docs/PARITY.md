@@ -1,7 +1,8 @@
-# Rust ↔ Python parity notes
+# Rust ↔ JAX parity notes
 
 Reference implementation: [`yosh95/ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs)
-(crate `ssm-latent-model`, Burn 0.21). This document is the porting log: what matches,
+(crate `ssm-latent-model`, Burn 0.21).
+PyTorch sibling: [`yosh95/ssm-latent-py`](https://github.com/yosh95/ssm-latent-py). This document is the porting log for `ssm-latent-jax`: what matches,
 what is intentionally different, and what was deliberately left out.
 
 ## Module map
