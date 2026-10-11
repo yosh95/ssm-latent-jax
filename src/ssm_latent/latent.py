@@ -1,8 +1,7 @@
 """JEPA-style latent predictors and their loss functions.
 
-Port of the Rust `ssm_latent_model::latent` module.  The model predicts the
-*next* latent state from the fused (observation, action) representation and is
-trained with
+The model predicts the *next* latent state from the fused (observation, action)
+representation and is trained with
 
 ``L = L_latent + recon_weight * (L_recon + L_pred_x)
         + stability_weight * L_stability + curvature_weight * L_curvature``
@@ -55,8 +54,7 @@ class Buffer(nnx.Variable):
 
     Used for the frozen random projection matrices: they live inside the NNX
     graph (so they are checkpointed together with the parameters and moved with
-    the model) but are invisible to ``wrt=nnx.Param`` optimiser filters - exactly
-    like the `stability_projections` buffer of the Rust implementation.
+    the model) but are invisible to ``wrt=nnx.Param`` optimiser filters.
     """
 
 
@@ -65,8 +63,8 @@ def make_projections(
 ) -> jax.Array:
     """Normalised, frozen random projection matrix ``[d_model, n_projections]``.
 
-    Equivalent to the Rust `stability_projections` buffer: sampled from
-    ``N(0, 1)`` and normalised column-wise, never updated by the optimiser.
+    Sampled from ``N(0, 1)`` and normalised column-wise; never updated by the
+    optimiser (registered as a :class:`Buffer`, not a ``Param``).
     """
     key = jax.random.PRNGKey(seed)
     w = jax.random.normal(key, (d_model, n_projections), jnp.float32)
@@ -196,8 +194,8 @@ class MlpEncoder(nnx.Module):
     be used to probe the theory empirically.
 
     ``n_hidden == 0`` degenerates to a single linear layer.  Dropout is
-    intentionally not implemented (the Rust version's is a no-op at inference
-    time and it would break determinism of the tests).
+    intentionally not implemented: it is a no-op at inference time and would
+    break the determinism of the tests.
     """
 
     def __init__(
@@ -217,8 +215,8 @@ class MlpEncoder(nnx.Module):
 
         if n_hidden == 0:
             self.input_proj = nnx.Linear(input_dim, d_model, rngs=rngs, param_dtype=dtype)
-            self.hidden = []
-            self.output_proj = None
+            self.hidden: nnx.List = nnx.List([])
+            self.output_proj: nnx.Linear | None = None
             return
 
         self.input_proj = nnx.Linear(input_dim, hidden_dim, rngs=rngs, param_dtype=dtype)
@@ -240,8 +238,8 @@ class MlpEncoder(nnx.Module):
         h = self.input_proj(x)
         for layer in self.hidden:
             h = layer(jax.nn.relu(h))
-        h = self.output_proj(jax.nn.relu(h))
-        return h
+        assert self.output_proj is not None  # set whenever n_hidden > 0
+        return self.output_proj(jax.nn.relu(h))
 
     def forward_single(self, x: jax.Array) -> jax.Array:
         """``[B, input_dim] -> [B, d_model]``."""
@@ -250,6 +248,7 @@ class MlpEncoder(nnx.Module):
         h = self.input_proj(x)
         for layer in self.hidden:
             h = layer(jax.nn.relu(h))
+        assert self.output_proj is not None  # set whenever n_hidden > 0
         return self.output_proj(jax.nn.relu(h))
 
 
@@ -366,9 +365,8 @@ class LatentPredictor(ModelIOMixin, nnx.Module):
         """One autoregressive step.  Returns ``(pred_z, new_state)``."""
         a = self.action_encoder(action)
         u = self.fusion(jnp.concatenate([z_prev, a], axis=-1))
-        y, st = self.ssm.step(
-            u, SsmState(h=state.h, prev_bx=state.prev_bx, conv_state=state.conv_state)
-        )
+        prev_bx = state.prev_bx if state.prev_bx is not None else jnp.zeros_like(state.h)
+        y, st = self.ssm.step(u, SsmState(h=state.h, prev_bx=prev_bx, conv_state=state.conv_state))
         return y, LatentState(h=st.h, prev_bx=st.prev_bx, conv_state=st.conv_state)
 
     def loss(self, args: LatentLossArgs) -> jax.Array:
@@ -390,7 +388,7 @@ class MultiScaleLatentPredictor(ModelIOMixin, nnx.Module):
     """JEPA predictor whose dynamics come from a multi-timescale SSM stack.
 
     Set ``action_dim=0`` for the unsupervised (no-action) variant: the fusion
-    layer then maps ``d_model -> d_model`` exactly as in the Rust version.
+    layer then maps ``d_model -> d_model`` instead of concatenating actions.
     """
 
     def __init__(
@@ -411,6 +409,7 @@ class MultiScaleLatentPredictor(ModelIOMixin, nnx.Module):
 
         self.encoder = nnx.Linear(input_dim, config.d_model, rngs=rngs, param_dtype=dtype)
         self.decoder = nnx.Linear(config.d_model, input_dim, rngs=rngs, param_dtype=dtype)
+        self.action_encoder: nnx.Linear | None
         if self.has_action:
             self.action_encoder = nnx.Linear(
                 action_dim, config.d_model, rngs=rngs, param_dtype=dtype

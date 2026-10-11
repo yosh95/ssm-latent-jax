@@ -1,8 +1,8 @@
 """Task definitions and distributions for meta-learning.
 
-Ported from `ssm_latent_model::meta::tasks`.  A *task* is a concrete dynamics
-model (support set to adapt on, query set to score the adaptation) and a
-*distribution* is a key-deterministic sampler of those tasks.
+A *task* is a concrete dynamics model (a support set to adapt on and a query set
+to score the adaptation) and a *distribution* is a key-deterministic sampler of
+those tasks.
 """
 
 from __future__ import annotations
@@ -217,10 +217,13 @@ class CompositeDistribution(TaskDistribution):
     n_families: int = 2
 
     def __post_init__(self):
-        self.circle_dist = self.circle_dist or CircleWorldDistribution()
-        self.sine_dist = self.sine_dist or SineWaveDistribution()
+        if self.circle_dist is None:
+            self.circle_dist = CircleWorldDistribution()
+        if self.sine_dist is None:
+            self.sine_dist = SineWaveDistribution()
 
     def sample_task(self, key: jax.Array) -> Task:
+        assert self.circle_dist is not None and self.sine_dist is not None  # set in __post_init__
         k_choice, k_task = jax.random.split(key)
         if float(jax.random.uniform(k_choice)) < 0.5:
             return self.circle_dist.sample_task(k_task)

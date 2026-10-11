@@ -266,3 +266,18 @@ def test_health_check_is_jit_friendly():
 
     r2, score, cost = metrics(z)
     assert jnp.isfinite(r2) and jnp.isfinite(score) and jnp.isfinite(cost)
+
+
+def test_stationarity_measures_layer_entropy_from_layer_errors():
+    """With a per-layer breakdown the attribution is measured, not heuristic."""
+    z = jax.random.normal(jax.random.PRNGKey(0), (2, 32, 4))
+    # `layer_errors[i]` is layer i's *prediction* of z; layer 1 is far off.
+    layer_errors = [z, z + 5.0, z]
+    report = monitor.check_stationarity(z, z, n_layers=3, layer_errors=layer_errors)
+    assert report.dominant_layer == 1
+    assert 0.0 <= report.layer_entropy <= 1.0
+    # an equal error split -> higher entropy than the concentrated case
+    spread = [z + 0.3, z + 0.5, z + 0.4]
+    flat = monitor.check_stationarity(z, z, n_layers=3, layer_errors=spread)
+    assert flat.layer_entropy > report.layer_entropy
+    assert flat.layer_entropy > 0.9

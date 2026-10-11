@@ -22,13 +22,44 @@ __all__ = [
 
 @dataclass
 class MetaTrainMetrics:
-    """Per-iteration diagnostics of :class:`ReptileMetaLearner`."""
+    """Per-iteration diagnostics of :class:`ReptileMetaLearner`.
+
+    Attributes
+    ----------
+    support_improvement:
+        Mean reduction of the *inner-loop* (support) loss, i.e. how much the
+        few adaptation steps move the parameters.  Always non-negative in
+        expectation and is what the outer loop optimises.
+    query_improvement:
+        Mean reduction of the *post-adaptation query* loss (generalisation).
+    avg_support_loss, avg_query_loss:
+        Mean support / query losses after adaptation.
+    success_rate:
+        Fraction of sampled tasks whose post-adaptation *query* loss dropped
+        below the task's ``success_threshold`` (the SAI "did it learn it"
+        signal).
+    avg_adaptation_time_ms:
+        Wall-clock time of the inner loops.
+    """
 
     iteration: int = 0
-    avg_improvement: float = 0.0
-    avg_final_loss: float = 0.0
+    support_improvement: float = 0.0
+    query_improvement: float = 0.0
+    avg_support_loss: float = 0.0
+    avg_query_loss: float = 0.0
     success_rate: float = 0.0
     avg_adaptation_time_ms: float = 0.0
+
+    # ----- backwards-compatible aliases (deprecated) ----------------------
+    @property
+    def avg_improvement(self) -> float:
+        """Deprecated alias of :attr:`support_improvement`."""
+        return self.support_improvement
+
+    @property
+    def avg_final_loss(self) -> float:
+        """Deprecated alias of :attr:`avg_query_loss`."""
+        return self.avg_query_loss
 
 
 class ReptileMetaLearner:
@@ -40,9 +71,8 @@ class ReptileMetaLearner:
 
         theta <- theta + outer_lr * (adapted_theta - theta)
 
-    Note that the Rust reference collapsed this interpolation into
-    ``theta <- adapted_theta``; here the proper (and configurable) interpolation
-    is implemented, with ``outer_lr = 1.0`` recovering the Rust behaviour.
+    ``outer_lr = 1.0`` recovers a hard copy of the adapted weights, so the full
+    range from "gentle interpolation" to "copy" is available.
     """
 
     def __init__(
@@ -74,7 +104,8 @@ class ReptileMetaLearner:
         self.seed += 1
         key = jax.random.PRNGKey(self.seed)
 
-        improvement = final_loss = success = adapt_time = 0.0
+        sup_improvement = qry_improvement = 0.0
+        sup_loss = qry_loss = success = adapt_time = 0.0
         for i in range(self.tasks_per_batch):
             task = self.task_dist.sample_task(jax.random.fold_in(key, i))
             adapted, result = adapt(
@@ -85,8 +116,16 @@ class ReptileMetaLearner:
                 strategy=self.strategy,
                 loss_weights=self.loss_weights,
             )
-            improvement += result.initial_loss - result.final_loss
-            final_loss += result.final_loss
+            # support = inner-loop training loss (monotone-ish by construction);
+            # query  = held-out loss whose *initial* value is the pre-adaptation
+            # query loss.  The query improvement is therefore the SAI quantity
+            # of interest and can legitimately be negative for an over-shooting
+            # inner loop - which is exactly what we want to surface.
+            sup_before = result.loss_curve[0] if result.loss_curve else result.initial_loss
+            sup_improvement += sup_before - result.loss_curve[-1] if result.loss_curve else 0.0
+            qry_improvement += result.initial_query_loss - result.final_loss
+            sup_loss += result.loss_curve[-1] if result.loss_curve else sup_before
+            qry_loss += result.final_loss
             success += float(result.success)
             adapt_time += result.adaptation_time_ms
 
@@ -101,8 +140,10 @@ class ReptileMetaLearner:
         n = float(self.tasks_per_batch)
         return MetaTrainMetrics(
             iteration=iteration,
-            avg_improvement=improvement / n,
-            avg_final_loss=final_loss / n,
+            support_improvement=sup_improvement / n,
+            query_improvement=qry_improvement / n,
+            avg_support_loss=sup_loss / n,
+            avg_query_loss=qry_loss / n,
             success_rate=success / n,
             avg_adaptation_time_ms=adapt_time / n,
         )
@@ -116,8 +157,9 @@ class ReptileMetaLearner:
             if verbose and ((i + 1) % 10 == 0 or i == 0):
                 print(
                     f"[Meta-Train {i + 1:3d}/{num_iterations}] "
-                    f"avg_improvement={m.avg_improvement:.6f} "
-                    f"avg_final_loss={m.avg_final_loss:.6f} "
+                    f"support_gain={m.support_improvement:+.6f} "
+                    f"query_gain={m.query_improvement:+.6f} "
+                    f"query_loss={m.avg_query_loss:.6f} "
                     f"success_rate={m.success_rate:.2f}"
                 )
         return metrics

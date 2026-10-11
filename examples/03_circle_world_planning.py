@@ -1,10 +1,9 @@
 """Example 3 - the CircleWorld benchmark and latent planning.
 
 Predict the (x, y) position of a point rotating at constant angular velocity,
-20 steps into the future - the deceptively simple physical task used by the
-Rust sibling project to argue that *neither* a plain Mamba predictor in
-observation space *nor* a single-timescale latent predictor suffices, while a
-multi-timescale SSM x JEPA model does.
+20 steps into the future - the deceptively simple physical task that shows
+*neither* a plain Mamba predictor in observation space *nor* a single-timescale
+latent predictor suffices, while a multi-timescale SSM x JEPA model does.
 
 The script trains all three variants, reports one-step and 20-step errors, and
 then exercises the latent-planning utilities (temporal straightening, plan path

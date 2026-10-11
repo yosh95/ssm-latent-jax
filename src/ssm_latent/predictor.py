@@ -1,7 +1,5 @@
 """Pure-Mamba predictors (no JEPA machinery) and the closed-loop "imagination" API.
 
-Port of `ssm_latent_model::predictor`:
-
 * :class:`MambaPredictor` - one SSM block, observation -> next observation.
 * :class:`MultiScaleMambaPredictor` - multi-timescale stack with an action
   fusion path, an ``h``-based closed loop and scheduled h-sampling training.

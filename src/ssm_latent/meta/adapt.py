@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 import jax
 import optax
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-class AdaptationStrategy(str, Enum):
+class AdaptationStrategy(StrEnum):
     """Which parameter subsets are updated during inner-loop adaptation.
 
     This mirrors SAI's emphasis on *specialisation*: adapting only the encoder
@@ -67,18 +67,37 @@ class LossWeights:
 
 @dataclass
 class AdaptationResult:
-    """Outcome of one inner-loop adaptation run."""
+    """Outcome of one inner-loop adaptation run.
 
-    initial_loss: float = 0.0
+    Loss bookkeeping (all on the model's JEPA objective):
+
+    * ``initial_support_loss`` - support loss before any step.
+    * ``loss_curve``           - support loss recorded at the end of each step
+                                 (so ``loss_curve[0]`` is the loss *after* one
+                                 gradient step; the pre-step value is
+                                 ``initial_support_loss``).
+    * ``initial_query_loss``   - held-out (query) loss before any step.
+    * ``final_loss``           - query loss after the final step; this is the
+                                 generalisation number the SAI metric cares
+                                 about and drives ``success``.
+    """
+
+    initial_support_loss: float = 0.0
     final_loss: float = 0.0
     loss_curve: list[float] = field(default_factory=list)
+    initial_query_loss: float = 0.0
     steps_taken: int = 0
     success: bool = False
     adaptation_time_ms: float = 0.0
 
+    @property
+    def initial_loss(self) -> float:
+        """Deprecated alias of :attr:`initial_support_loss`."""
+        return self.initial_support_loss
+
 
 def adaptation_strategy_description(strategy: AdaptationStrategy) -> str:
-    """Human-readable description of a strategy (parity with the Rust API)."""
+    """Human-readable description of a strategy."""
     return AdaptationStrategy(strategy).description
 
 
@@ -228,7 +247,8 @@ def inner_loop(
     def loss_fn(model, obs, act):
         return adapt_loss(model, obs, act, loss_weights)
 
-    initial_loss = float(loss_fn(model, support_obs, support_act))
+    initial_support_loss = float(loss_fn(model, support_obs, support_act))
+    initial_query_loss = float(loss_fn(model, query_obs, query_act))
     curve: list[float] = []
 
     @nnx.jit
@@ -244,9 +264,10 @@ def inner_loop(
 
     final_loss = float(loss_fn(model, query_obs, query_act))
     return model, AdaptationResult(
-        initial_loss=initial_loss,
+        initial_support_loss=initial_support_loss,
         final_loss=final_loss,
         loss_curve=curve,
+        initial_query_loss=initial_query_loss,
         steps_taken=inner_steps,
         success=final_loss < task.success_threshold,
         adaptation_time_ms=(time.perf_counter() - start) * 1000.0,

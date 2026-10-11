@@ -1,9 +1,8 @@
 """Multimodal (vision + sensor + action) latent predictor.
 
-Port of `ssm_latent_model::multimodal`.  Images are encoded by a small CNN,
-sensor and action streams by linear layers; everything is fused and fed to the
-SSM, whose output is decoded back into both modalities for the auxiliary
-reconstruction losses.
+Images are encoded by a small CNN, sensor and action streams by linear layers;
+everything is fused and fed to the SSM, whose output is decoded back into both
+modalities for the auxiliary reconstruction losses.
 """
 
 from __future__ import annotations
@@ -62,8 +61,7 @@ class VisionDecoder(nnx.Module):
     ):
         rngs = rngs or nnx.Rngs(0)
         self.linear = nnx.Linear(d_model, 32 * 4 * 4, rngs=rngs, param_dtype=dtype)
-        # "SAME" gives the 4x4 -> 8x8 -> 16x16 upsampling of the Rust
-        # ConvTranspose2d(stride=2, padding=1, padding_out=1).
+        # "SAME" gives the 4x4 -> 8x8 -> 16x16 upsampling with stride 2.
         self.deconv1 = nnx.ConvTranspose(
             32, 16, (3, 3), strides=(2, 2), padding="SAME", rngs=rngs, param_dtype=dtype
         )
@@ -149,7 +147,7 @@ class MultimodalLatentPredictor(ModelIOMixin, nnx.Module):
         *,
         scan_mode: str = "parallel",
     ):
-        """Images are given channels-first (``[B, T, C, H, W]``, as in the Rust API).
+        """Images are given channels-first (``[B, T, C, H, W]``).
 
         They are transposed to the channels-last layout expected by the flax
         convolutions internally, and the decoded images are transposed back.

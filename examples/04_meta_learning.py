@@ -114,7 +114,7 @@ def main() -> None:
         steps = "never" if rep.steps_to_success is None else str(rep.steps_to_success)
         print(
             f"  {adaptation_strategy_description(strategy):<24} "
-            f"params={len(names):3d}  steps->success={steps:>5}  AUC={rep.adaptation_auc:.4f}"
+            f"tensors={len(names):3d}  steps->success={steps:>5}  AUC={rep.adaptation_auc:.4f}"
         )
 
     section("take-away")

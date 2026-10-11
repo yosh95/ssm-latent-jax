@@ -1,13 +1,14 @@
 """Synthetic physical-dynamics datasets used for training and testing.
 
-Ports `ssm_latent_model::meta::tasks` (CircleWorld, SineWave) and the data
-generators used by the Rust demos (damped oscillator, Lissajous, chaotic
-variants, tokenised "tiny stories").
+CircleWorld and SineWave back the meta-learning benchmarks; the damped
+oscillator, Lissajous and chaotic-circle generators drive the latent-prediction
+and streaming examples.  All generators are deterministic given their arguments
+(and, where noise is enabled, a seed).
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
 import jax
@@ -27,7 +28,7 @@ __all__ = [
 
 
 # --------------------------------------------------------------------------- #
-# circle world (the canonical demo task of the Rust crate)
+# circle world (the canonical benchmark task)
 # --------------------------------------------------------------------------- #
 def circle_world(
     batch_size: int = 4,
@@ -41,8 +42,8 @@ def circle_world(
 ) -> jax.Array:
     """Observations ``(cos, sin)`` of a point moving on a unit circle.
 
-    Mirrors `CircleWorldTask::generate_data`: the per-batch phase offset is
-    ``phase_shift + b * 1.25`` and the sample times are ``t * dt``.
+    The per-batch phase offset is ``phase_shift + b * 1.25`` and the sample
+    times are ``t * dt``; the point always lies on the unit circle.
     """
     b = jnp.arange(batch_size)[:, None]
     t = jnp.arange(seq_len)[None, :]
@@ -149,7 +150,7 @@ def make_demo_data(
     **kwargs,
 ) -> jax.Array:
     """Factory dispatching to one of the generators above."""
-    generators = {
+    generators: dict[str, Callable[..., jax.Array]] = {
         "circle": circle_world,
         "sine": sine_wave,
         "damped": damped_oscillator,

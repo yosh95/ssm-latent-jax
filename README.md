@@ -7,40 +7,42 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
 [![JAX](https://img.shields.io/badge/JAX-%2BFlax%20NNX-9cf.svg)](https://github.com/google/jax)
 
-A **JAX / Flax NNX implementation** of a Mamba-3 selective state-space model fused with
-a JEPA (Joint-Embedding Predictive Architecture) latent world model — a port of
-[`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) (Rust / Burn).
+A **Python-first research toolkit** for JEPA latent world models, built on **JAX / Flax
+NNX**: Mamba-3 selective state-space dynamics fused with a Joint-Embedding Predictive
+Architecture, the LeJEPA collapse-prevention objective, and the identifiability monitors
+and meta-learning (SAI) machinery that go with them.
 
-Sibling implementations of the same algorithms:
+> **Python is the primary implementation.** This package is where the algorithms are
+> developed and studied. A Rust / Burn port ([`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs))
+> and a small PyTorch port ([`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py))
+> exist for *deployment* and *cross-language comparison*; they share this codebase's
+> numerical conventions so results stay comparable, but they follow this one.
 
-| Language | Repository | Notes |
+| Language | Repository | Role |
 |---|---|---|
-| 🦀 Rust (Burn) | [`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) | the reference; includes the WASM demos and meta-learning package |
-| 🔥 PyTorch | [`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) | *this repo did not start here* — a separate, smaller PyTorch port of `ssm.rs` + `latent.rs` lives there |
-| ⚡ JAX (this repo) | `ssm-latent-jax` | full port: SSM, JEPA, monitors, predictors, multimodal, meta-learning |
+| ⚡ **JAX (this repo)** | `ssm-latent-jax` | **primary** — research, prototyping, verification |
+| 🦀 Rust (Burn) | [`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) | deployment port; includes WASM demos |
+| 🔥 PyTorch | [`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) | minimal PyTorch re-implementation of the SSM + latent predictors |
 
-> **Why a Python/JAX port at all?** Rust is excellent for deployment, but compile times
-> and the size of intermediate artefacts make it a poor fit for *iterating* on research
-> ideas. JAX additionally gives you a functional, composable core (`jit` / `grad` / `vmap`
-> / `lax.scan`) and XLA compilation for free.
->
-> This package keeps the exact numerical semantics of the Rust reference — including its
-> quirks, see [`docs/PARITY.md`](docs/PARITY.md) — while making the codebase explorable in
-> a notebook, hackable in one line, and verifiable with `pytest`.
+> **Why JAX / Python?** JAX gives a functional, composable core (`jit` / `grad` / `vmap` /
+> `lax.scan`) and XLA compilation, and the whole codebase is explorable in a notebook,
+> hackable in one line, and verifiable with `pytest`. The algorithms live here; the other
+> languages consume them. Shared numerical semantics are documented in
+> [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ---
 
 ## 📦 What is inside
 
-| Module | What it does | Rust counterpart |
-|---|---|---|
-| `ssm_latent.ssm` | Mamba-3 selective SSM: exponential-trapezoidal recurrence, complex-valued rotation, MIMO, BCNorm, causal conv; parallel scan **and** `O(1)` streaming step | `src/ssm.rs` |
-| `ssm_latent.latent` | JEPA latent predictors, recon/stability/curvature losses, SIGReg (LeJEPA) objective, MLP encoder | `src/latent.rs` |
-| `ssm_latent.monitor` | LeJEPA identifiability monitors: Theorems 1–4 (Gaussianity, stationarity, isotropic exploration, planning consistency) | `src/latent.rs` |
-| `ssm_latent.predictor` | Pure-Mamba predictors, closed-loop "imagination" (`d_model` and `h`-based), scheduled h-sampling training | `src/predictor.rs` |
-| `ssm_latent.multimodal` | Vision (CNN) + sensor + action fusion | `src/multimodal.rs` |
-| `ssm_latent.meta` | Task distributions, adaptation strategies, Reptile meta-learning, adaptation-speed evaluation (the SAI core metric) | `src/meta/*` |
-| `ssm_latent.data` | CircleWorld, SineWave, damped oscillator, Lissajous, chaotic circle, tiny-stories corpus | `src/meta/tasks.rs`, demos |
+| Module | What it does |
+|---|---|
+| `ssm_latent.ssm` | Mamba-3 selective SSM: exponential-trapezoidal recurrence, complex-valued rotation, MIMO, BCNorm, causal conv; parallel scan **and** `O(1)` streaming step |
+| `ssm_latent.latent` | JEPA latent predictors, recon/stability/curvature losses, SIGReg (LeJEPA) objective, MLP encoder |
+| `ssm_latent.monitor` | LeJEPA identifiability monitors: Theorems 1–4 (Gaussianity, stationarity, isotropic exploration, planning consistency) |
+| `ssm_latent.predictor` | Pure-Mamba predictors, closed-loop "imagination" (`d_model` and `h`-based), scheduled h-sampling training |
+| `ssm_latent.multimodal` | Vision (CNN) + sensor + action fusion |
+| `ssm_latent.meta` | Task distributions, adaptation strategies, Reptile meta-learning, adaptation-speed evaluation (the SAI core metric) |
+| `ssm_latent.data` | CircleWorld, SineWave, damped oscillator, Lissajous, chaotic circle, tiny-stories corpus |
 
 ---
 
@@ -51,8 +53,20 @@ git clone https://github.com/yosh95/ssm-latent-jax
 cd ssm-latent-jax
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"        # CPU JAX; use ".[cuda]" for CUDA 12
-# requires Python >= 3.11 (flax >= 0.11 for `nnx.List`)
+# requires Python >= 3.11, < 3.15 (flax >= 0.11 for `nnx.List`)
 ```
+
+Using [`uv`](https://docs.astral.sh/uv/) (which reads `.python-version`, so the
+interpreter is picked for you):
+
+```bash
+uv venv && uv pip install -e ".[dev]"     # or: uv sync, if you keep a lockfile
+```
+
+> **Python version.** `requires-python` is `>=3.11,<3.15`. `flax` pulls in
+> `tensorstore`, which publishes wheels up to **cp314** only; on Python 3.15+ uv
+> falls back to a Bazel source build of `tensorstore` that fails. Pin 3.11–3.14
+> (`.python-version` says 3.14).
 
 or, without installing:
 
@@ -66,7 +80,8 @@ export PYTHONPATH=src
 ## ⚡ Quickstart
 
 ```python
-import jax, jax.numpy as jnp
+import jax.numpy as jnp
+import optax
 from flax import nnx
 
 from ssm_latent import MultiScaleSsmConfig, MultiScaleLatentPredictor
@@ -106,7 +121,7 @@ pred_z, state = model.step(z[:, -1], act[:, -1], state)
 
 ## 🔁 Parallel scan ≡ O(1) streaming step
 
-The central invariant of the reference implementation is preserved and tested:
+The central invariant — parallel scan ≡ streaming step — is preserved and tested:
 
 ```python
 y_parallel = block.forward(x, scan_mode="parallel")    # O(log T) depth
@@ -126,10 +141,10 @@ pytest -q -m "not slow"   # skip the longer meta-learning check
 
 | Suite | Tests | What it guarantees |
 |---|---:|---|
-| `test_config.py` | 15 | every validation rule of the Rust `SsmConfig` (parity on error messages) |
+| `test_config.py` | 15 | every `SsmConfig` validation rule and its error message |
 | `test_ssm.py` | 34 | parallel ≡ step ≡ `lax.scan`; conv causality; state shapes; damping/rotation init; JIT + grad + vmap composition |
 | `test_latent.py` | 34 | loss decomposition, `stop_gradient` placement, VICReg/SIGReg properties, frozen projection buffers, checkpoint round-trip |
-| `test_monitor.py` | 28 | Theorems 1–4: rotation invariance, Procrustes, kurtosis, exploration risk levels, planning consistency |
+| `test_monitor.py` | 29 | Theorems 1–4: rotation invariance, Procrustes, kurtosis, exploration risk levels, planning consistency |
 | `test_predictor.py` | 27 | streaming state advance, closed-loop imagination, h-sampling determinism, parameter counts, save/load |
 | `test_meta.py` | 29 | task shapes/distributions, strategy masks move **only** the intended parameters, Reptile interpolation, adaptation-speed metrics |
 | `test_multimodal.py` | 8 | vision encoder/decoder shape contract, modality ablation, loss decomposition |
@@ -190,15 +205,15 @@ The design follows the LeJEPA line of work and the SAI thesis:
 
 ---
 
-## 📄 Porting notes and known differences
+## 🧭 Design notes & shared semantics
 
-This is a faithful port, not a re-design. `docs/PARITY.md` documents the module-by-module
-mapping and, importantly, the few places where the Python version deliberately differs
-(notably: the Rust `ReptileMetaLearner` collapses the outer-loop interpolation into a hard
-copy; here the proper `θ ← θ + β(θ′ − θ)` is implemented, with `outer_lr=1.0` recovering the
-Rust behaviour). Documented quirks that are *reproduced*, not fixed, include the head-wise
-shared `theta` rotation, the `1/n_layers` residual scaling with a `±100` clamp, and the
-LeakyReLU in the closed-loop imagination path.
+`docs/DESIGN.md` documents the module layout, the numerical conventions that are shared
+with the sibling Rust / PyTorch ports, and where this implementation deliberately diverges
+(framework idioms and a few correctness choices).  Notable conventions include the
+head-wise `theta` rotation, the `1/n_layers` residual scaling with a `±100` clamp, and the
+LeakyReLU in the closed-loop imagination path.  The Reptile outer loop implements the
+general `θ ← θ + β(θ′ − θ)` update (with `outer_lr=1.0` reducing to a hard copy of the
+adapted weights).
 
 ---
 
@@ -217,8 +232,9 @@ MIT — see [LICENSE](LICENSE).
 }
 ```
 
-If you specifically want the PyTorch implementation, cite
-[`yosh95/ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) instead.
+If you build on the Rust or PyTorch ports instead, cite the corresponding repository
+([`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) /
+[`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py)).
 
 The algorithms themselves come from:
 

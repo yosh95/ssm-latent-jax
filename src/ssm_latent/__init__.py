@@ -1,9 +1,11 @@
-"""ssm_latent — a JAX/Flax NNX port of the Rust `ssm-latent-model` crate.
+"""ssm_latent — Mamba-3 x JEPA latent world models in JAX / Flax NNX.
 
-Mamba-3 (selective state space model) x JEPA (joint-embedding predictive
-architecture) for latent world modelling, targeting research, verification and
-prototyping workflows where Rust's compile times and intermediate artefacts get
-in the way.
+A research toolkit for *latent world modelling*: selective state-space dynamics
+(Mamba-3) fused with a Joint-Embedding Predictive Architecture (JEPA), plus the
+LeJEPA collapse-prevention objective and the identifiability monitors that go
+with it.  Everything is built on the functional JAX core (``jit`` / ``grad`` /
+``vmap`` / ``lax.scan``) and Flax NNX, so models are hackable in a notebook,
+composable, and verifiable with ``pytest``.
 
 Layout
 ------
@@ -14,9 +16,10 @@ Layout
 - :mod:`ssm_latent.multimodal`   vision + sensor + action fusion
 - :mod:`ssm_latent.data`         synthetic physical-dynamics datasets
 
-The numerical semantics (including quirks such as the head-wise `theta`
-parameter and the multi-scale `1/n_layers` output scaling) deliberately mirror
-the reference Rust implementation so that results are directly comparable.
+This package is the primary reference implementation.  A Rust/Burn sibling
+(`ssm-latent-rs`) and a small PyTorch sibling (`ssm-latent-py`) exist for
+deployment and comparison; the numerical semantics are intentionally shared so
+results across the three stay comparable.
 """
 
 from ssm_latent import (

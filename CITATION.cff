@@ -6,11 +6,13 @@ authors:
     alias: yosh95
 title: "ssm-latent-jax - Mamba-3 x JEPA latent world models in JAX/Flax"
 abstract: >-
-  A JAX / Flax NNX implementation of ssm-latent-rs: Mamba-3 selective state space models
-  integrated with a JEPA (Joint-Embedding Predictive Architecture) latent world
-  model. Includes multi-scale SSM stacks, SIGReg (LeJEPA) collapse prevention,
-  LeJEPA identifiability monitors (Theorems 1-4) and a Reptile meta-learning
-  framework for evaluating adaptation speed (the SAI core metric).
+  A Python-first research toolkit in JAX / Flax NNX for JEPA latent world models:
+  Mamba-3 selective state space models integrated with a JEPA (Joint-Embedding
+  Predictive Architecture) latent world model. Includes multi-scale SSM stacks,
+  SIGReg (LeJEPA) collapse prevention, LeJEPA identifiability monitors
+  (Theorems 1-4) and a Reptile meta-learning framework for evaluating adaptation
+  speed (the SAI core metric). Rust and PyTorch ports are available for deployment
+  and cross-language comparison.
 version: 0.1.0
 date-released: 2026-10-11
 repository-code: "https://github.com/yosh95/ssm-latent-jax"

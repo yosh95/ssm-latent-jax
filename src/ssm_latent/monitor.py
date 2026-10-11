@@ -1,7 +1,5 @@
 """LeJEPA identifiability monitors (Klindt, LeCun & Balestriero, 2026).
 
-Port of the monitoring helpers in `ssm_latent_model::latent`:
-
 * Theorem 1 - Gaussian latents  -> :func:`gennorm_identifiability_score`,
   :func:`compute_identifiability_r2`, :func:`procrustes_alignment`
 * Theorem 2 - stationary dynamics -> :func:`check_stationarity`
@@ -257,7 +255,24 @@ def check_exploration_quality(
 # --------------------------------------------------------------------------- #
 @dataclass
 class StationarityReport:
-    """Prediction-error trend and risk assessment (Theorem 2)."""
+    """Prediction-error trend and risk assessment (Theorem 2).
+
+    Attributes
+    ----------
+    residual_trend:
+        Slope of ``log`` prediction error against time; ~0 means stationary.
+    dominant_layer:
+        The timescale layer the error growth is attributed to.  When
+        ``layer_errors`` is supplied this is the layer with the largest
+        prediction error; otherwise it is inferred from the sign of the trend
+        (``HEURISTIC`` - see :func:`check_stationarity`).
+    layer_entropy:
+        Normalised Shannon entropy in ``[0, 1]`` of the per-layer error-energy
+        distribution.  ``1.0`` means "no single layer dominates" *or* "no
+        per-layer breakdown was provided".
+    risk_level:
+        ``"LOW"`` / ``"LOW-MEDIUM"`` / ``"HIGH"``.
+    """
 
     residual_trend: float
     dominant_layer: int
@@ -265,13 +280,48 @@ class StationarityReport:
     risk_level: str
 
 
+def _error_energy(pred, target) -> float:
+    """Mean squared prediction error of one tensor (a non-negative scalar)."""
+    err = jnp.asarray(pred) - jnp.asarray(target)
+    return float(jnp.mean(err**2))
+
+
+def _normalised_entropy(energies) -> float:
+    """Shannon entropy of a non-negative vector, normalised to ``[0, 1]``."""
+    e = jnp.asarray(energies, dtype=jnp.float32)
+    total = e.sum()
+    if total <= 0.0 or e.shape[0] <= 1:
+        return 1.0
+    p = e / total
+    ent = -jnp.sum(jnp.where(p > 0, p * jnp.log(p + 1e-12), 0.0))
+    return float(ent / jnp.log(float(e.shape[0])))
+
+
 def check_stationarity(
-    z: jax.Array, predicted_z: jax.Array, n_layers: int = 3
+    z: jax.Array,
+    predicted_z: jax.Array,
+    n_layers: int = 3,
+    *,
+    layer_errors: list[jax.Array] | None = None,
 ) -> StationarityReport:
     """Slope of ``log`` prediction error against time.
 
     A flat trend means the dynamics look stationary (Theorem 2's assumption);
     a strongly positive trend means the model is progressively losing track.
+
+    Parameters
+    ----------
+    z, predicted_z:
+        Ground-truth and predicted latents, ``[B, T, d_model]``.
+    n_layers:
+        Number of timescale layers of the model under inspection.
+    layer_errors:
+        Optional per-layer prediction-error tensors (e.g. the residual stream
+        after each SSM layer, all ``[B, T, d_model]``).  When provided, the
+        ``dominant_layer`` and ``layer_entropy`` fields are *measured* from
+        these.  When omitted they fall back to a documented heuristic and a
+        neutral entropy of ``1.0`` ("no per-layer breakdown"), rather than a
+        magic constant.
     """
     _, t = z.shape[:2]
     trend = 0.0
@@ -283,13 +333,17 @@ def check_stationarity(
         steps_c = steps - steps.mean()
         trend = float((steps_c @ (log_err - log_err.mean())) / (steps_c @ steps_c))
 
-    layer_entropy = 0.85 if n_layers > 1 else 1.0
-    if trend > 0.05:
-        dominant = n_layers - 1
-    elif trend < -0.05:
-        dominant = 0
+    if layer_errors is not None and len(layer_errors) > 0:
+        energies = [_error_energy(p, z) for p in layer_errors]
+        dominant = int(max(range(len(energies)), key=energies.__getitem__))
+        layer_entropy = _normalised_entropy(energies)
     else:
-        dominant = n_layers // 2
+        # HEURISTIC: without a per-layer breakdown the layer attribution is
+        # inferred from the *sign* of the trend (growth -> deepest/slowest
+        # layer, decay -> fastest layer, flat -> middle).  `layer_entropy` is
+        # reported as 1.0, meaning "not measured", never a fabricated value.
+        dominant = n_layers - 1 if trend > 0.05 else (0 if trend < -0.05 else n_layers // 2)
+        layer_entropy = 1.0
 
     if abs(trend) > 0.1:
         risk = "HIGH"
@@ -310,10 +364,15 @@ class PlanningConsistency:
 
 
 def health_check(
-    z: jax.Array, predicted_z: jax.Array, n_layers: int = 3, *, context: str = ""
+    z: jax.Array,
+    predicted_z: jax.Array,
+    n_layers: int = 3,
+    *,
+    context: str = "",
+    layer_errors: list[jax.Array] | None = None,
 ) -> tuple[ExplorationSummary, StationarityReport]:
     """Run the exploration-quality and stationarity checks together."""
     return (
         check_exploration_quality(z, context=context),
-        check_stationarity(z, predicted_z, n_layers),
+        check_stationarity(z, predicted_z, n_layers, layer_errors=layer_errors),
     )

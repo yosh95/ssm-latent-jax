@@ -1,7 +1,8 @@
-"""Configuration objects mirroring the Rust `SsmConfig` / `MultiScaleSsmConfig`.
+"""Configuration objects for the selective SSM blocks.
 
-Validation rules are identical to the reference implementation so that a
-configuration accepted (or rejected) in Rust behaves the same way here.
+Validation is fail-fast and gives precise error messages: a configuration is
+rejected before any array is allocated, and the same rules (and wording) are
+shared with the sibling Rust and PyTorch implementations.
 """
 
 from __future__ import annotations
@@ -113,8 +114,8 @@ class MultiScaleSsmConfig(SsmConfig):
 
     Layer 0 is "fast" (``a_re ~ U(-1.0, -0.3)``), layer 1 "medium"
     (``U(-0.3, -0.05)``) and every subsequent layer "slow"
-    (``U(-0.05, -0.005)``).  As in the Rust reference the causal convolution is
-    only instantiated on the first layer.
+    (``U(-0.05, -0.005)``).  The causal convolution is only instantiated on the
+    first layer; the deeper layers rely on the residual path.
     """
 
     n_layers: int = 3

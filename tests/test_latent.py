@@ -1,4 +1,4 @@
-"""Loss functions and JEPA latent predictors (parity with `src/latent.rs`)."""
+"""Loss functions and JEPA latent predictors."""
 
 import jax
 import jax.numpy as jnp

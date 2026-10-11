@@ -1,9 +1,8 @@
 """Equivalence guarantees for the selective SSM.
 
-The central invariant (verified in Rust by `tests/equivalence_test.rs`) is that
-the parallel-scan forward pass, the parallel scan driven by the sequential
-`step`, and the step-by-step loop all agree to float32 precision - with and
-without the causal convolution.
+The central invariant is that the parallel-scan forward pass, the parallel scan
+driven by the sequential `step`, and the step-by-step loop all agree to float32
+precision - with and without the causal convolution.
 """
 
 import jax

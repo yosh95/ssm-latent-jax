@@ -20,9 +20,9 @@ __all__ = [
 def normalize_projections(w: jax.Array, eps: float = 1e-6) -> jax.Array:
     """Normalise every column of a random projection matrix to unit length.
 
-    Mirrors `ssm_latent_model::preprocess::normalize_projections`: the Rust code
-    adds ``1e-6`` *before* dividing rather than clamping the norm, and we keep
-    that exact behaviour for numerical parity.
+    The ``eps`` is added to the norm *before* dividing (rather than clamping the
+    norm from below).  This keeps the operation smooth and finite even for a
+    zero column and matches the semantics used by the sibling implementations.
     """
     w = jnp.asarray(w)
     norm = jnp.sqrt(jnp.sum(w**2, axis=0, keepdims=True)) + eps
@@ -79,9 +79,8 @@ def pretty_params(model, filter=None) -> list[tuple[str, tuple[int, ...]]]:
 # --------------------------------------------------------------------------- #
 # checkpointing
 #
-# The Rust version serialises via Burn's `BinFileRecorder`; the closest Flax
-# equivalent is `flax.serialization` + msgpack, which keeps the same "save the
-# whole state in one binary file" ergonomics.
+# One binary file holding the whole NNX state (parameters *and* buffers) via
+# `flax.serialization` + msgpack.
 # --------------------------------------------------------------------------- #
 def _as_numpy(tree):
     import numpy as np
@@ -93,7 +92,7 @@ def save_model(model, path) -> str:
     """Serialise the full NNX state (params *and* buffers) to ``path``.
 
     Returns the path as a string.  ``.msgpack`` is appended when the path has no
-    suffix, mirroring the Rust recorder's ``.bin`` extension handling.
+    suffix.
     """
     from pathlib import Path
 
@@ -112,9 +111,9 @@ def save_model(model, path) -> str:
 def load_model(model, path):
     """Load a checkpoint written by :func:`save_model` into ``model`` (in place).
 
-    ``model`` must have been constructed with the same architecture and then
-    fully overwritten by the file's values; the updated module is returned for
-    convenience (``model`` itself is mutated, exactly like the Rust ``load``).
+    ``model`` must have been constructed with the same architecture and is
+    overwritten in place by the file's values; the module is also returned for
+    convenience.
     """
     from pathlib import Path
 
@@ -131,7 +130,7 @@ def load_model(model, path):
 
 
 class ModelIOMixin:
-    """Mixin adding the ``save``/``load`` API of the Rust predictors."""
+    """Mixin adding a one-call ``save``/``load`` checkpointing API."""
 
     def save(self, path) -> str:
         """Save this module's state to ``path`` (``.msgpack`` appended if absent)."""

@@ -1,4 +1,4 @@
-"""Configuration validation must mirror the Rust reference exactly."""
+"""Configuration validation rules and error messages."""
 
 import pytest
 

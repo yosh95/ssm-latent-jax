@@ -1,7 +1,5 @@
 """Meta-learning for SAI ("Superhuman Adaptable Intelligence").
 
-Port of `ssm_latent_model::meta`:
-
 * :mod:`~ssm_latent.meta.tasks`  - task definitions and distributions
 * :mod:`~ssm_latent.meta.adapt`  - inner-loop adaptation + strategies
 * :mod:`~ssm_latent.meta.eval`   - adaptation-speed metrics (the SAI core metric)

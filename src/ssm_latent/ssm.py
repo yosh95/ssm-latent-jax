@@ -1,10 +1,10 @@
 """Mamba-3 style selective state-space model (JAX / Flax NNX).
 
-This is a line-by-line port of the Rust `ssm_latent_model::ssm` module.  The
-numerical semantics - including the head-wise shared ``theta`` rotation, the
-duplicated real/imaginary damping blocks and the two-term
-exponential-trapezoidal recurrence - are kept identical so that the two
-implementations can be compared directly.
+The recurrence, complex-valued rotation and BCNorm here implement Mamba-3
+(Lahoti et al., 2026) directly in JAX.  The numerical conventions - the
+head-wise ``theta`` rotation, the duplicated real/imaginary damping blocks and
+the two-term exponential-trapezoidal recurrence - are shared with the sibling
+Rust and PyTorch implementations so cross-language results stay comparable.
 
 Recurrence implemented by :meth:`selective_scan` (Mamba-3, Lahoti et al., 2026)::
 
@@ -35,7 +35,7 @@ import jax.numpy as jnp
 from flax import nnx
 
 from ssm_latent.config import MultiScaleSsmConfig, SsmConfig
-from ssm_latent.utils import normalize_projections  # noqa: F401  (re-export parity)
+from ssm_latent.utils import normalize_projections  # noqa: F401  (re-export)
 
 __all__ = [
     "SsmState",
@@ -47,7 +47,7 @@ __all__ = [
     "sequential_scan",
 ]
 
-_RMS_EPS = 1e-5  # Burn's RmsNorm default epsilon
+_RMS_EPS = 1e-5  # RMSNorm epsilon (matches the other implementations)
 
 
 # --------------------------------------------------------------------------- #
@@ -61,9 +61,9 @@ def causal_conv1d(
     """Depthwise causal 1-D convolution with ``"valid"`` output length.
 
     ``x`` is ``[B, T, C]``, ``weight`` is ``[C, 1, K]`` and the result is
-    ``[B, T, C]``.  Zero padding of ``K - 1`` steps is prepended, exactly as in
-    the Rust reference (which transposes to ``[B, C, T]`` and uses the backend's
-    ``Conv1d`` with ``PaddingConfig1d::Valid``).
+    ``[B, T, C]`` with ``"valid"`` length semantics: ``K - 1`` steps of zero
+    padding are prepended so that the length is preserved and the convolution
+    never looks into the future.
     """
     batch, seq_len, channels = x.shape
     kernel = weight.shape[-1]
@@ -115,9 +115,8 @@ def parallel_scan(
         ``[..., T, R, 2]`` additive terms.
     mode:
         ``"parallel"`` (default) uses the Blelloch/Hillis-Steele doubling scan
-        exactly like the Rust implementation (``O(log T)`` depth, identical
-        round-off order); ``"sequential"`` uses the naive loop and is useful as
-        a slow but obviously-correct reference.
+        (``O(log T)`` depth); ``"sequential"`` uses the naive loop and is useful
+        as a slow but obviously-correct reference to cross-validate against.
 
     Returns
     -------
@@ -280,6 +279,10 @@ class SsmBlock(nnx.Module):
             self.conv_bias = None
             self.conv_kernel = 0
 
+    #: Optional causal-convolution parameters (``None`` when ``use_conv=False``).
+    conv_weight: nnx.Param | None
+    conv_bias: nnx.Param | None
+
     # ------------------------------------------------------------------ utils
     def _bc(self, u_silu: jax.Array):
         """BCNorm + biases for B and C, shaped ``[B, T, H, R, N]``."""
@@ -297,6 +300,7 @@ class SsmBlock(nnx.Module):
         projected = self.in_proj(x)
         u, evo_gate = jnp.split(projected, 2, axis=-1)
         if self.conv_weight is not None:
+            assert self.conv_bias is not None  # set together with conv_weight
             u = causal_conv1d(u, self.conv_weight[...], self.conv_bias[...])
         return jax.nn.silu(u), evo_gate
 
@@ -347,9 +351,9 @@ class SsmBlock(nnx.Module):
         half = d_state // 2
 
         # --- per-head step size, gate and rotation ---------------------------
-        # NB: the Rust reference computes the rotation angle head-wise only
-        # (`dt_proj` and `theta_proj` both emit n_heads values), so `da_re`,
-        # `da_im` and `theta` share the same [B, T, H, half] shape here.
+        # The rotation angle is defined head-wise (`dt_proj` and `theta_proj`
+        # both emit n_heads values), so `da_re`, `da_im` and `theta` share the
+        # same [B, T, H, half] shape.
         dt = delta[:, :, :, None]  # [B, T, H, 1]
         da_re = jnp.exp(self.a_re[...][None, None] * dt)  # [B, T, H, half]
         da_im = self.a_im[...][None, None] * dt  # [B, T, H, half]
@@ -388,7 +392,7 @@ class SsmBlock(nnx.Module):
 
         ``a``: ``[B, T, H, half, 2, 2]``, ``w``: ``[B, T, H, N, D]`` real with the
         real/imaginary decomposition of ``w`` taken along the state axis (the
-        reference implementation splits ``N = d_state`` into halves).
+        ``N = d_state`` axis is split into real/imaginary halves).
         """
         batch, seq_len, h_heads, half = a.shape[:4]
         n_states, d_mimo = w.shape[-2], w.shape[-1]
@@ -436,8 +440,10 @@ class SsmBlock(nnx.Module):
         # --- input projection + causal conv (stateful) ------------------------
         projected = self.in_proj(x)
         u, evo_gate = jnp.split(projected, 2, axis=-1)
-        next_conv_state = None
+        next_conv_state: jax.Array | None = None
         if self.conv_weight is not None:
+            assert state.conv_state is not None  # guaranteed by use_conv=True
+            assert self.conv_bias is not None  # set together with conv_weight
             buf = jnp.concatenate([state.conv_state, u[:, :, None]], axis=-1)
             kernel = self.conv_weight.shape[-1]
             out = jnp.zeros((batch, self.d_inner), dtype=u.dtype)
@@ -470,7 +476,7 @@ class SsmBlock(nnx.Module):
         beta = (delta * (1.0 - lam))[:, :, None, None] * da_re_full
 
         prev_bx = state.prev_bx
-        if prev_bx is None:  # first step: same as zeros (as in the Rust reference)
+        if prev_bx is None:  # first step: beta term is zero by construction
             prev_bx = jnp.zeros_like(current_bx)
         h_next = da_re_full * h_rot + gamma * current_bx + beta * prev_bx
 
@@ -497,8 +503,8 @@ class MultiScaleSsmBlock(nnx.Module):
     """``n_layers`` SSM blocks with per-layer timescale initialisation.
 
     Each layer is wrapped in a pre-LayerNorm residual branch whose contribution
-    is scaled by ``1 / n_layers`` and clamped to ``[-100, 100]`` - a quirk of the
-    reference implementation that is reproduced faithfully.
+    is scaled by ``1 / n_layers`` and clamped to ``[-100, 100]`` for numerical
+    stability.
     """
 
     def __init__(
@@ -515,8 +521,8 @@ class MultiScaleSsmBlock(nnx.Module):
         self.n_heads = config.n_heads
         self.mimo_rank = config.mimo_rank
 
-        self.layers = nnx.List([])
-        self.norms = nnx.List([])
+        self.layers: nnx.List = nnx.List([])
+        self.norms: nnx.List = nnx.List([])
         base = SsmConfig(
             d_model=config.d_model,
             d_state=config.d_state,
@@ -569,8 +575,8 @@ class MultiScaleSsmBlock(nnx.Module):
             prev_bx=[s.prev_bx for s in states],
             conv_state=[s.conv_state for s in states],
         )
-        # note: the Rust version represents "no previous Bx yet" as None; the
-        # first step is identical whether that is zeros or None (zeros * beta).
+        # the first step is identical whether "no previous Bx yet" is zeros or
+        # None, since beta * 0 = 0.
 
     def step(self, x: jax.Array, state: MultiScaleSsmState) -> tuple[jax.Array, MultiScaleSsmState]:
         """One timestep through every layer of the stack."""
