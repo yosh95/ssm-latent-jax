@@ -1,0 +1,9 @@
+# Runtime requirements (CPU). For CUDA 12 use `jax[cuda12]` instead of `jax`.
+jax>=0.4.30
+flax>=0.10.0
+optax>=0.2.0
+numpy>=1.26
+
+# Development / verification (optional)
+# pytest>=8.0
+# ruff>=0.6

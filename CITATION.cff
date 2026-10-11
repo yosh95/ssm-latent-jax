@@ -1,0 +1,66 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - given-names: Yoshihiro
+    family-names: Ando
+    alias: yosh95
+title: "SSM Latent World Model (Python/JAX) - Mamba-3 x JEPA"
+abstract: >-
+  A JAX / Flax NNX port of ssm-latent-rs: Mamba-3 selective state space models
+  integrated with a JEPA (Joint-Embedding Predictive Architecture) latent world
+  model. Includes multi-scale SSM stacks, SIGReg (LeJEPA) collapse prevention,
+  LeJEPA identifiability monitors (Theorems 1-4) and a Reptile meta-learning
+  framework for evaluating adaptation speed (the SAI core metric).
+version: 0.1.0
+date-released: 2026-10-11
+repository-code: "https://github.com/yosh95/ssm-latent-py"
+license: MIT
+keywords:
+  - jax
+  - flax
+  - mamba
+  - jepa
+  - state-space-models
+  - world-model
+  - latent-prediction
+  - sigreg
+  - lejepa
+  - meta-learning
+  - reptile
+  - sai
+references:
+  - type: article
+    authors:
+      - given-names: Randall
+        family-names: Balestriero
+      - given-names: Yann
+        family-names: LeCun
+    title: "LeJEPA: Provable and Scalable Self-Supervised Learning Without the Heuristics"
+    year: 2025
+    journal: "arXiv preprint arXiv:2511.08544"
+    doi: 10.48550/arXiv.2511.08544
+  - type: article
+    authors:
+      - given-names: David
+        family-names: Klindt
+      - given-names: Yann
+        family-names: LeCun
+      - given-names: Randall
+        family-names: Balestriero
+    title: "When Does LeJEPA Learn a World Model?"
+    year: 2026
+    journal: "arXiv preprint arXiv:2605.26379"
+    doi: 10.48550/arXiv.2605.26379
+  - type: article
+    authors:
+      - given-names: Judah
+        family-names: Goldfeder
+      - given-names: Philippe
+        family-names: Wyder
+      - given-names: Yann
+        family-names: LeCun
+      - given-names: Ravid
+        family-names: Shwartz-Ziv
+    title: "AI Must Embrace Specialization via Superhuman Adaptable Intelligence"
+    year: 2026
+    journal: "arXiv preprint arXiv:2602.23643v1"

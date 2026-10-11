@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.eggs/
+.Python
+
+# virtual environments
+.venv/
+venv/
+env/
+
+# tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+.ipynb_checkpoints/
+
+# checkpoints written by ModelIOMixin.save()
+*.msgpack
+*.bin
+
+# editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
