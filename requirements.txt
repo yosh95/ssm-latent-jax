@@ -1,6 +1,6 @@
 # Runtime requirements (CPU). For CUDA 12 use `jax[cuda12]` instead of `jax`.
-jax>=0.4.30
-flax>=0.10.0
+jax>=0.6.0
+flax>=0.11.0
 optax>=0.2.0
 numpy>=1.26
 
