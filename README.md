@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/yosh95/ssm-latent-jax/actions/workflows/ci.yml/badge.svg)](https://github.com/yosh95/ssm-latent-jax/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
+[![Python 3.11%E2%80%933.14](https://img.shields.io/badge/python-3.11%E2%80%933.14-blue.svg)](https://www.python.org)
 [![JAX](https://img.shields.io/badge/JAX-%2BFlax%20NNX-9cf.svg)](https://github.com/google/jax)
 
 A **Python-first research toolkit** for JEPA latent world models, built on **JAX / Flax
