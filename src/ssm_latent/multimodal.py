@@ -16,7 +16,7 @@ from flax import nnx
 from ssm_latent.config import SsmConfig
 from ssm_latent.latent import N_PROJECTIONS_DEFAULT, Buffer, stability_loss
 from ssm_latent.ssm import SsmBlock
-from ssm_latent.utils import ModelIOMixin
+from ssm_latent.utils import ModelIOMixin, mean_squared_error_or_zero
 
 __all__ = [
     "VisionEncoder",
@@ -173,9 +173,9 @@ class MultimodalLatentPredictor(ModelIOMixin, nnx.Module):
 
     def loss(self, args: MultimodalLossInput) -> jax.Array:
         seq_len = args.z.shape[1]
-        mse_latent = (
-            (jax.lax.stop_gradient(args.z[:, 1:]) - args.pred_z[:, : seq_len - 1]) ** 2
-        ).mean()
+        mse_latent = mean_squared_error_or_zero(
+            jax.lax.stop_gradient(args.z[:, 1:]) - args.pred_z[:, : seq_len - 1]
+        )
         mse_img = ((args.orig_img - args.recons_img) ** 2).mean()
         mse_sens = ((args.orig_sens - args.recons_sens) ** 2).mean()
         reg = stability_loss(args.z, jax.lax.stop_gradient(self.stability_projections[...]))

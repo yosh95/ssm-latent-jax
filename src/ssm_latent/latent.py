@@ -25,7 +25,7 @@ from flax import nnx
 
 from ssm_latent.config import MultiScaleSsmConfig, SsmConfig
 from ssm_latent.ssm import MultiScaleSsmBlock, MultiScaleSsmState, SsmBlock, SsmState
-from ssm_latent.utils import ModelIOMixin, normalize_projections
+from ssm_latent.utils import ModelIOMixin, mean_squared_error_or_zero, normalize_projections
 
 __all__ = [
     "Buffer",
@@ -148,7 +148,7 @@ def lejepa_loss(
     """``L_pred + gamma * SIGReg(z)`` - the LeJEPA training objective."""
     _, seq_len = z.shape[:2]
     target = jax.lax.stop_gradient(z[:, 1:])
-    mse_latent = ((target - pred_z[:, : seq_len - 1]) ** 2).mean()
+    mse_latent = mean_squared_error_or_zero(target - pred_z[:, : seq_len - 1])
     return mse_latent + sigreg_weight * sigreg_loss(z, projections, freqs)
 
 
@@ -286,11 +286,11 @@ def latent_loss(args: LatentLossArgs, projections: jax.Array) -> jax.Array:
     """Combined JEPA latent-prediction + reconstruction + regularisation loss."""
     _, seq_len = args.z.shape[:2]
     target_z = jax.lax.stop_gradient(args.z[:, 1:])
-    mse_latent = ((target_z - args.pred_z[:, : seq_len - 1]) ** 2).mean()
+    mse_latent = mean_squared_error_or_zero(target_z - args.pred_z[:, : seq_len - 1])
 
     mse_recon = ((args.original_x - args.reconstructed_x) ** 2).mean()
     target_x = jax.lax.stop_gradient(args.original_x[:, 1:])
-    mse_pred_x = ((target_x - args.predicted_x[:, : seq_len - 1]) ** 2).mean()
+    mse_pred_x = mean_squared_error_or_zero(target_x - args.predicted_x[:, : seq_len - 1])
 
     reg = stability_loss(args.z, projections)
     curv = curvature_loss(args.z)
@@ -473,8 +473,17 @@ class MultiScaleLatentPredictor(ModelIOMixin, nnx.Module):
         return MultiscaleLatentState(h=st.h, prev_bx=st.prev_bx, conv_state=st.conv_state)
 
     def step(self, z_prev: jax.Array, action: jax.Array | None, state: MultiscaleLatentState):
-        """One autoregressive step.  Returns ``(pred_z, new_state)``."""
-        if self.action_encoder is not None and action is not None:
+        """One autoregressive step.  Returns ``(pred_z, new_state)``.
+
+        For an action-conditioned model (``action_dim > 0``) an action must be
+        supplied: silently falling back to the unconditioned path would drop the
+        control input and quietly change the dynamics, so it raises instead.
+        """
+        if self.action_encoder is not None:
+            if action is None:
+                raise ValueError(
+                    "this predictor was built with action conditioning; pass an action to step()"
+                )
             u = self.fusion(jnp.concatenate([z_prev, self.action_encoder(action)], axis=-1))
         else:
             u = self.fusion(z_prev)

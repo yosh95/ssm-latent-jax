@@ -8,6 +8,7 @@ import jax.numpy as jnp
 __all__ = [
     "normalize_projections",
     "leaky_relu",
+    "mean_squared_error_or_zero",
     "tree_l2_distance",
     "count_parameters",
     "pretty_params",
@@ -27,6 +28,21 @@ def normalize_projections(w: jax.Array, eps: float = 1e-6) -> jax.Array:
     w = jnp.asarray(w)
     norm = jnp.sqrt(jnp.sum(w**2, axis=0, keepdims=True)) + eps
     return w / norm
+
+
+def mean_squared_error_or_zero(diff: jax.Array) -> jax.Array:
+    """MSE of a difference tensor, returning ``0`` when there are no pairs.
+
+    A length-1 sequence has no ``(t, t+1)`` pair, so the next-step prediction
+    term is *vacuous*, not undefined.  Naively writing ``(...**2).mean()`` on the
+    resulting empty tensor yields ``NaN`` (``0/0``) and poisons the whole loss,
+    which is a real hazard for streaming / single-frame inference.  This helper
+    makes the empty case an explicit, documented ``0``.
+    """
+    diff = jnp.asarray(diff)
+    if diff.size == 0:
+        return jnp.zeros((), dtype=diff.dtype)
+    return (diff**2).mean()
 
 
 def leaky_relu(x: jax.Array, slope: float = 0.01) -> jax.Array:

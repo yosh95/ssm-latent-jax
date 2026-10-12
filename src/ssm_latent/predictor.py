@@ -18,7 +18,7 @@ from flax import nnx
 
 from ssm_latent.config import MultiScaleSsmConfig, SsmConfig
 from ssm_latent.ssm import MultiScaleSsmBlock, MultiScaleSsmState, SsmBlock, SsmState
-from ssm_latent.utils import ModelIOMixin, leaky_relu
+from ssm_latent.utils import ModelIOMixin, leaky_relu, mean_squared_error_or_zero
 
 __all__ = [
     "PredictorState",
@@ -109,8 +109,13 @@ class MambaPredictor(ModelIOMixin, nnx.Module):
 
     @staticmethod
     def loss(predictions: jax.Array, targets: jax.Array) -> jax.Array:
-        """Next-step MSE (``predictions[:, :-1]`` vs ``targets[:, 1:]``)."""
-        return ((targets[:, 1:] - predictions[:, :-1]) ** 2).mean()
+        """Next-step MSE (``predictions[:, :-1]`` vs ``targets[:, 1:]``).
+
+        A single-step sequence contains no prediction / target pair; the term is
+        then **0** (vacuous), not ``NaN`` - see
+        :func:`~ssm_latent.utils.mean_squared_error_or_zero`.
+        """
+        return mean_squared_error_or_zero(targets[:, 1:] - predictions[:, :-1])
 
 
 class MultiScaleMambaPredictor(ModelIOMixin, nnx.Module):
@@ -288,5 +293,10 @@ class MultiScaleMambaPredictor(ModelIOMixin, nnx.Module):
 
     @staticmethod
     def loss(predictions: jax.Array, targets: jax.Array) -> jax.Array:
-        """Next-step MSE (``predictions[:, :-1]`` vs ``targets[:, 1:]``)."""
-        return ((targets[:, 1:] - predictions[:, :-1]) ** 2).mean()
+        """Next-step MSE (``predictions[:, :-1]`` vs ``targets[:, 1:]``).
+
+        A single-step sequence contains no prediction / target pair; the term is
+        then **0** (vacuous), not ``NaN`` - see
+        :func:`~ssm_latent.utils.mean_squared_error_or_zero`.
+        """
+        return mean_squared_error_or_zero(targets[:, 1:] - predictions[:, :-1])
