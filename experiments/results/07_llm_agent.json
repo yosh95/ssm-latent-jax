@@ -1,0 +1,340 @@
+{
+ "agent": {
+  "trials": [
+   {
+    "spec": {
+     "omegas": [
+      0.5,
+      1,
+      1.5,
+      2,
+      2.5
+     ],
+     "k": 5,
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.46431317925453186,
+      "closed": 0.7883349657058716
+     },
+     "1.2": {
+      "gain": 0.6130642294883728,
+      "closed": 0.4898539185523987
+     },
+     "3.0": {
+      "gain": -0.10790395736694336,
+      "closed": 1.134012222290039
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.6130642294883728,
+     "mean_out_of_range_gain": -0.2861085683107376,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 5,
+     "omegas": [
+      0.25,
+      0.75,
+      1.5,
+      2.25,
+      3
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.3901747167110443,
+      "closed": 0.714196503162384
+     },
+     "1.2": {
+      "gain": 0.6424359977245331,
+      "closed": 0.4604821503162384
+     },
+     "3.0": {
+      "gain": -0.08300471305847168,
+      "closed": 1.1091129779815674
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.6424359977245331,
+     "mean_out_of_range_gain": -0.236589714884758,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 5,
+     "omegas": [
+      0.1,
+      0.5,
+      1.2,
+      2,
+      3.5
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.36579957604408264,
+      "closed": 0.6898213624954224
+     },
+     "1.2": {
+      "gain": 0.641126424074173,
+      "closed": 0.4617917239665985
+     },
+     "3.0": {
+      "gain": -0.11297833919525146,
+      "closed": 1.1390866041183472
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.641126424074173,
+     "mean_out_of_range_gain": -0.23938895761966705,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 10,
+     "omegas": [
+      0.25,
+      0.75,
+      1.5,
+      2.25,
+      3
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.29282084107398987,
+      "closed": 0.6168426275253296
+     },
+     "1.2": {
+      "gain": 0.5857035517692566,
+      "closed": 0.5172145962715149
+     },
+     "3.0": {
+      "gain": -0.10136091709136963,
+      "closed": 1.1274691820144653
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.5857035517692566,
+     "mean_out_of_range_gain": -0.19709087908267975,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 10,
+     "omegas": [
+      0.25,
+      0.4,
+      1.2,
+      2.5,
+      3
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.3113006055355072,
+      "closed": 0.6353223919868469
+     },
+     "1.2": {
+      "gain": 0.6134188771247864,
+      "closed": 0.4894992709159851
+     },
+     "3.0": {
+      "gain": -0.05535697937011719,
+      "closed": 1.081465244293213
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.6134188771247864,
+     "mean_out_of_range_gain": -0.1833287924528122,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 10,
+     "omegas": [
+      0.25,
+      0.6,
+      1.2,
+      2,
+      3
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.226718932390213,
+      "closed": 0.5507407188415527
+     },
+     "1.2": {
+      "gain": 0.554305911064148,
+      "closed": 0.5486122369766235
+     },
+     "3.0": {
+      "gain": -0.08085405826568604,
+      "closed": 1.1069623231887817
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.554305911064148,
+     "mean_out_of_range_gain": -0.15378649532794952,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 10,
+     "omegas": [
+      0.25,
+      1.2,
+      3,
+      0.5,
+      2.5
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.22536441683769226,
+      "closed": 0.549386203289032
+     },
+     "1.2": {
+      "gain": 0.4911895990371704,
+      "closed": 0.6117285490036011
+     },
+     "3.0": {
+      "gain": -0.0770270824432373,
+      "closed": 1.103135347366333
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.4911895990371704,
+     "mean_out_of_range_gain": -0.15119574964046478,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 10,
+     "omegas": [
+      0.25,
+      0.5,
+      1.2,
+      2.5,
+      3
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.36439183354377747,
+      "closed": 0.6884136199951172
+     },
+     "1.2": {
+      "gain": 0.5939884185791016,
+      "closed": 0.5089297294616699
+     },
+     "3.0": {
+      "gain": -0.06441867351531982,
+      "closed": 1.0905269384384155
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.5939884185791016,
+     "mean_out_of_range_gain": -0.21440525352954865,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 10,
+     "omegas": [
+      0.25,
+      0.5,
+      0.75,
+      1.2,
+      2.5,
+      3
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.17450809478759766,
+      "closed": 0.4985298812389374
+     },
+     "1.2": {
+      "gain": 0.34673768281936646,
+      "closed": 0.756180465221405
+     },
+     "3.0": {
+      "gain": -0.1832810640335083,
+      "closed": 1.209389328956604
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.34673768281936646,
+     "mean_out_of_range_gain": -0.17889457941055298,
+     "usable_out_of_range": false
+    }
+   },
+   {
+    "spec": {
+     "k": 10,
+     "omegas": [
+      0.25,
+      0.4,
+      1.2,
+      2.5,
+      2.8,
+      3
+     ],
+     "iters": 40,
+     "seed": 0
+    },
+    "scores": {
+     "0.25": {
+      "gain": -0.2366238534450531,
+      "closed": 0.5606456398963928
+     },
+     "1.2": {
+      "gain": 0.5265164971351624,
+      "closed": 0.5764016509056091
+     },
+     "3.0": {
+      "gain": -0.07786810398101807,
+      "closed": 1.1039763689041138
+     }
+    },
+    "summary": {
+     "in_range_gain": 0.5265164971351624,
+     "mean_out_of_range_gain": -0.15724597871303558,
+     "usable_out_of_range": false
+    }
+   }
+  ],
+  "final_message": "Best result: training on a curriculum that included the exact target speeds plus bracketing neighbors \u2014 omegas [0.25, 1.2, 3, 0.5, 2.5] with k=10 adaptation steps \u2014 gave mean_out_of_range_gain \u2248 -0.151 (the least-negative of all trials); including the target omegas directly and maximizing adaptation steps (k=10) consistently helped, though no curriculum reached positive out-of-range gain.",
+  "stopped": "no_tool_call"
+ }
+}

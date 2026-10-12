@@ -1,0 +1,141 @@
+# Findings log
+
+A running record of what each experiment in this directory actually showed, the
+numbers behind it, and - just as important - the caveats.  Nothing here is a
+publication; it is a lab notebook so we do not have to re-derive (or mis-remember)
+a result.
+
+Guiding question of the whole line of work:
+
+> Can a small, cheap **world model** be steered by a frozen **LLM** (the "human with
+> a car" picture) so that the *pair* reaches tasks neither could reach alone - and
+> does that require touching any LLM weights?  (No: the coupling is intentionally
+> loose - text and scalars only.)
+
+---
+
+## exp01 - adaptation speed vs. imagination (single seed)
+
+**Question.** The SAI metric is *adaptation speed*.  Is it the same thing as one-step
+accuracy, and does either predict whether the model can *imagine* (roll out in closed
+loop)?
+
+**Setup.** One ~40K model, 11 angular velocities; Reptile meta-training; closed-loop
+imagination vs. a "persistence" (nothing-changes) baseline.
+
+**Result.** Adaptation speed and one-step RMSE move together (r = +0.98), but neither
+predicts closed-loop imagination (r = -0.62).  After meta-training imagination beats
+persistence in 6/7 in-range tasks but only 1/4 out-of-range ones - even where
+adaptation is fast (omega=0.3: 5 steps, AUC 0.035).
+
+**Caveat.** Single seed, single model size.  Superseded by exp03.
+
+## exp02 - does h-sampling cure closed-loop drift?
+
+**Question.** `examples/03` calls `forward_with_h_sampling` "the remedy" for drift.
+Does it work?
+
+**Result.** **No.**  Over 3 seeds, raising `h_sampling_prob` 0.0 -> 0.6 made one-step
+(0.27 -> 0.50) and closed-loop (0.46 -> 0.68) RMSE *worse*.  `examples/03` now says so.
+
+## exp03 - robustness sweep (pre-declared protocol)
+
+**Question.** Does exp01 hold up across sizes and seeds, with uncertainty reported?
+
+**Setup.** 2 sizes x 3 seeds x 9 omegas = 54 cells; bootstrap CIs.
+
+**Result.** Holds up.  r(adapt AUC, one-step) = **+0.93 [+0.89, +0.96]**;
+r(adapt AUC, imagination gain) = **-0.59 [-0.71, -0.48]**.  Imagination beats
+persistence in **27/30 in-range** cells vs **4/24 out-of-range**.  Counter to
+intuition, the *larger* model does **worse** out of range (omega=3.2 gain -0.15 at
+d_model=32 vs -0.03 at d_model=16).
+
+**Conclusion.** "Adapts fast / predicts well one step" is a bad proxy for "can be
+used to imagine".  The breakdown is concentrated out of the training range.
+
+## exp04 - objective ablation (INCOMPLETE)
+
+**Question.** Is the closed-loop breakdown a property of the *objective* (JEPA/SIGReg)
+or of closing the loop in general?
+
+**Status.** Implemented and smoke-tested, but **not yet run at full scale** (the run
+was paused before it finished).  It compares an obs-space MSE predictor against the
+JEPA latent model under VICReg vs. SIGReg regularisation.  This is the natural next
+piece of (B).
+
+## exp05 - the loose loop (frozen model + a few adaptation steps on a demo)
+
+**Question.** With a *scripted* driver, can a few adaptation steps on a short demo make
+a pretrained model usable (closed loop) on a new target, including out of range?
+
+**Result.**
+- In-range targets: usable already at k=0 (the meta-learned prior suffices); extra
+  adaptation is neutral-to-slightly-harmful.
+- Out-of-range omega=0.25: k=1-3 adaptation *rescues* it (**both seeds positive**),
+  but k>=5 drifts back.
+- Out-of-range omega=3.0: **seed-dependent** (one seed improves, one does not).
+
+**Reading.** A few steps can carry the model a little beyond its prior - "the driver
+reaches a place it could not" - but the effect is fragile and over-adaptation hurts.
+This is the first (weak) support for the "human + car" picture.
+
+## exp06 - the LLM chooses a curriculum (one shot)
+
+**Question.** Give a frozen LLM the targets and ask for a training curriculum.  Does it
+beat the obvious human heuristic ("widen the range")?
+
+**Result.** **No.**  default meanOOD -0.268, **wide -0.252**, LLM one-shot -0.289.
+The LLM independently converges on "include the extremes" - i.e. *the same idea as a
+human* - and all curricula stay negative out of range.
+
+**Reading.** A single answer is not "driving".  The value of loose coupling, if any,
+must come from *operating* the model (trying, observing, revising), not from one guess.
+
+## exp07 - the LLM *runs the experiments* (hypothesis -> trial -> revise)
+
+**Question.** Give the LLM a `run_trial` tool and a budget of trials.  Does searching
+beat answering once, and beat the scripted baseline?
+
+**Result (seed 0).** The LLM ran 10 trials, discovered the adaptation budget `k` as a
+lever, raised it 5 -> 10, and reached meanOOD **-0.151** - beating wide (-0.252) by
++0.10.
+
+**Caveat.**  One seed, one trial per setting.  Directly re-tested by exp08.
+
+## exp08 - is exp07 robust? (pre-declared)
+
+**Question.** Does the LLM's `k=10` finding hold across seeds?
+
+**Result.** **NOT robust.**  k=10 over k=5 holds in **2/3** seeds; beating `wide`
+holds in **1/3** seeds (seed1 and seed2: wide wins).  All 9 cells negative.  The best
+single cell overall was actually `wide` at k=5, seed2 (**-0.040**).
+
+**Secondary observation.** The LLM's `k=10` setting was *tight* across seeds
+(-0.151 / -0.138 / -0.140) while `wide` was scattered (-0.252 .. -0.040) - i.e. the
+LLM may have found a *stable* setting rather than an *accurate* one.  Unverified.
+
+**Meta-lesson.** exp07's positive claim was a single-seed artefact.  Recorded here on
+purpose: this is why exp08 existed.
+
+---
+
+## Where this leaves the "LLM drives a world model" picture
+
+| Claim | Status |
+|---|---|
+| A few adaptation steps can push a pretrained model out of its prior (loose loop works at all) | **Weak yes** (exp05, omega=0.25, both seeds) |
+| Tuning the *curriculum* or *budget* fixes out-of-range imagination | **No** (exp06, exp08, seed-robust) |
+| A frozen LLM, given a tool, can search better than a scripted heuristic | **Unproven** - the one positive result did not reproduce (exp07 vs exp08) |
+| The closed-loop breakdown is a property of the objective/mechanism, not the settings | **Hypothesis** - the settings search hit a ceiling (usable = 0 cells), which points here |
+
+**Implication for (B).**  The search space we handed the LLM (curriculum, k) is the
+wrong one - it cannot fix the breakdown.  (B) should hand the LLM variables that act
+on the *cause*: the adaptation objective (one-step vs. rollout-aware) and the
+adaptation mechanism (weight update vs. latent conditioning).  exp04 is the first
+half of that.
+
+## Reproduce
+
+Every number above is regenerable: each experiment caches its raw results under
+`experiments/results/*.json` and re-runs with `--force`.  exp04 has not been run to
+completion yet.

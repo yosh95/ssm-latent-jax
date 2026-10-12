@@ -1,0 +1,128 @@
+[
+ {
+  "curriculum": "llm-best",
+  "k": 5,
+  "seed": 0,
+  "mean_ood": -0.20044080913066864,
+  "in_range": 0.5158994793891907
+ },
+ {
+  "curriculum": "llm-best",
+  "k": 5,
+  "seed": 1,
+  "mean_ood": -0.12543262541294098,
+  "in_range": 0.4387379288673401
+ },
+ {
+  "curriculum": "llm-best",
+  "k": 5,
+  "seed": 2,
+  "mean_ood": -0.28033290803432465,
+  "in_range": 0.5487615466117859
+ },
+ {
+  "curriculum": "llm-best",
+  "k": 10,
+  "seed": 0,
+  "mean_ood": -0.15119574964046478,
+  "in_range": 0.4911895990371704
+ },
+ {
+  "curriculum": "llm-best",
+  "k": 10,
+  "seed": 1,
+  "mean_ood": -0.13814687728881836,
+  "in_range": 0.44579553604125977
+ },
+ {
+  "curriculum": "llm-best",
+  "k": 10,
+  "seed": 2,
+  "mean_ood": -0.14037813246250153,
+  "in_range": 0.6006173491477966
+ },
+ {
+  "curriculum": "wide",
+  "k": 5,
+  "seed": 0,
+  "mean_ood": -0.25198499858379364,
+  "in_range": 0.5696219205856323
+ },
+ {
+  "curriculum": "wide",
+  "k": 5,
+  "seed": 1,
+  "mean_ood": -0.11162231862545013,
+  "in_range": 0.5193178653717041
+ },
+ {
+  "curriculum": "wide",
+  "k": 5,
+  "seed": 2,
+  "mean_ood": -0.04011489450931549,
+  "in_range": 0.6529445648193359
+ },
+ {
+  "curriculum": "wide",
+  "k": 10,
+  "seed": 0,
+  "mean_ood": -0.2328893095254898,
+  "in_range": 0.6113617718219757
+ },
+ {
+  "curriculum": "wide",
+  "k": 10,
+  "seed": 1,
+  "mean_ood": -0.1177280992269516,
+  "in_range": 0.5029856562614441
+ },
+ {
+  "curriculum": "wide",
+  "k": 10,
+  "seed": 2,
+  "mean_ood": -0.14424414932727814,
+  "in_range": 0.6822900176048279
+ },
+ {
+  "curriculum": "default",
+  "k": 5,
+  "seed": 0,
+  "mean_ood": -0.26775337755680084,
+  "in_range": 0.5993003845214844
+ },
+ {
+  "curriculum": "default",
+  "k": 5,
+  "seed": 1,
+  "mean_ood": -0.21039728820323944,
+  "in_range": 0.45344990491867065
+ },
+ {
+  "curriculum": "default",
+  "k": 5,
+  "seed": 2,
+  "mean_ood": -0.33382566273212433,
+  "in_range": 0.6033650934696198
+ },
+ {
+  "curriculum": "default",
+  "k": 10,
+  "seed": 0,
+  "mean_ood": -0.21856342256069183,
+  "in_range": 0.5622842907905579
+ },
+ {
+  "curriculum": "default",
+  "k": 10,
+  "seed": 1,
+  "mean_ood": -0.2218806892633438,
+  "in_range": 0.4185978174209595
+ },
+ {
+  "curriculum": "default",
+  "k": 10,
+  "seed": 2,
+  "mean_ood": -0.19809962809085846,
+  "in_range": 0.530196487903595
+ }
+]
