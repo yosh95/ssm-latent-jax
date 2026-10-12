@@ -1,0 +1,44 @@
+[
+ {
+  "system": "driven_pendulum",
+  "horizon": 5,
+  "persistence_rmse": 0.29890188574790955,
+  "learned_rmse": 0.2712242603302002,
+  "code_rmse": 0.01892273686826229
+ },
+ {
+  "system": "driven_pendulum",
+  "horizon": 10,
+  "persistence_rmse": 0.5370355248451233,
+  "learned_rmse": 0.5377762317657471,
+  "code_rmse": 0.03337547928094864
+ },
+ {
+  "system": "driven_pendulum",
+  "horizon": 20,
+  "persistence_rmse": 0.7850114703178406,
+  "learned_rmse": 0.7283757925033569,
+  "code_rmse": 0.0540393702685833
+ },
+ {
+  "system": "double_pendulum",
+  "horizon": 5,
+  "persistence_rmse": 0.26624536514282227,
+  "learned_rmse": 0.7411910891532898,
+  "code_rmse": 0.01708918623626232
+ },
+ {
+  "system": "double_pendulum",
+  "horizon": 10,
+  "persistence_rmse": 0.6864014863967896,
+  "learned_rmse": 0.88185715675354,
+  "code_rmse": 0.047926705330610275
+ },
+ {
+  "system": "double_pendulum",
+  "horizon": 20,
+  "persistence_rmse": 1.4231549501419067,
+  "learned_rmse": 1.1950350999832153,
+  "code_rmse": 0.05435192957520485
+ }
+]

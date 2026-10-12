@@ -1,0 +1,65 @@
+[
+ {
+  "spread": 0.0,
+  "horizon": 5,
+  "persistence_rmse": 0.3362628221511841,
+  "learned_rmse": 0.31453895568847656,
+  "code_rmse": 0.01749432273209095
+ },
+ {
+  "spread": 0.0,
+  "horizon": 10,
+  "persistence_rmse": 0.5770096182823181,
+  "learned_rmse": 0.5352120399475098,
+  "code_rmse": 0.03127357363700867
+ },
+ {
+  "spread": 0.0,
+  "horizon": 20,
+  "persistence_rmse": 0.8055652379989624,
+  "learned_rmse": 0.802002489566803,
+  "code_rmse": 0.06985237449407578
+ },
+ {
+  "spread": 0.5,
+  "horizon": 5,
+  "persistence_rmse": 0.32953697443008423,
+  "learned_rmse": 0.29991450905799866,
+  "code_rmse": 0.01769784837961197
+ },
+ {
+  "spread": 0.5,
+  "horizon": 10,
+  "persistence_rmse": 0.5734707713127136,
+  "learned_rmse": 0.4655248820781708,
+  "code_rmse": 0.032389696687459946
+ },
+ {
+  "spread": 0.5,
+  "horizon": 20,
+  "persistence_rmse": 0.8328640460968018,
+  "learned_rmse": 0.7355700135231018,
+  "code_rmse": 0.055152758955955505
+ },
+ {
+  "spread": 1.0,
+  "horizon": 5,
+  "persistence_rmse": 0.3242053985595703,
+  "learned_rmse": 0.29851216077804565,
+  "code_rmse": 0.019260670989751816
+ },
+ {
+  "spread": 1.0,
+  "horizon": 10,
+  "persistence_rmse": 0.5655308961868286,
+  "learned_rmse": 0.46451786160469055,
+  "code_rmse": 0.04157676920294762
+ },
+ {
+  "spread": 1.0,
+  "horizon": 20,
+  "persistence_rmse": 0.817131757736206,
+  "learned_rmse": 0.6966829895973206,
+  "code_rmse": 0.10507197678089142
+ }
+]

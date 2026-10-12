@@ -32,6 +32,8 @@ Raw numbers are cached under `experiments/results/` so a re-run reuses them unle
 | `08_k_robustness.py` | Is exp07's `k=10` finding robust across seeds? | **No.**  k=10>k=5 in 2/3 seeds; beating `wide` in 1/3. All cells negative. exp07 was a single-seed artefact. |
 | `09_mechanism_ablation.py` | Do the *mechanism* levers (rollout objective, state warm-up) fix the breakdown? | **No.** 0/8 usable cells; rollout training made out-of-range *worse* (-0.44) and broke in-range too. |
 | `10_baseline_diagnosis.py` | Is the breakdown the model's fault or a too-strong baseline? | **Both.**  At omega=0.25 a *linear extrapolation* scores 0.11 vs the model's 0.70 (easy baseline), but the model's latent drifts 2.1x more than the task moves - it cannot hold still. |
+| `11_no_closed_form.py` | On systems with no closed form (driven/chaotic pendulum), does a learned world model earn its keep? | **No.**  Code (true equations from an estimated state) is 10-40x more accurate and never loses ground with horizon. |
+| `12_hidden_params.py` | Does hiding the parameters (+ partial observation) make code lose? | **No.**  A gradient-fitted integrator is still 7-20x more accurate.  Unknown *parameters* do not stop code; only an unknown *functional form* would. |
 
 See [`FINDINGS.md`](FINDINGS.md) for the narrative, the caveats, and what it implies for
 the next step.

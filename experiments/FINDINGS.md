@@ -162,6 +162,58 @@ report both the persistence *and* the linear baseline, and a "hold-still" error.
 | Changing the objective / adaptation mechanism fixes it | **No** (exp09 - rollout training made it worse; 0/8 usable cells) |
 | The breakdown is (partly) an evaluation artefact | **Yes** (exp10 - a linear extrapolation reaches 0.11 at omega=0.25 vs the model's 0.70) |
 | The model has a genuine defect | **Yes** (exp10 - it drifts 2.1x more than the task moves at omega=0.25; it cannot hold still) |
+| A learned world model beats "just write the equations" on writable dynamics | **No** (exp11 - code is 10-40x more accurate on both a non-chaotic and a chaotic system) |
+| Hiding the parameters makes code lose | **No** (exp12 - a fitted integrator is still 7-20x more accurate; not knowing the *form*, not the parameters, is what would stop code) |
+
+## exp11 - on a task with no closed form, does a learned world model earn its keep?
+
+**Question.** Every generator so far was closed-form, where an *exact* Python tool
+predicts to ~1e-6 - so a learned model could never win.  Move to systems that are only
+numerically integrable (damped driven pendulum; chaotic double pendulum) and race three
+forecasters: persistence, a learned JEPA/SSM world model, and "code" (the *true*
+equations integrated from a state estimated from observations alone).
+
+**Result.** Code wins everywhere, and by a lot:
+- driven pendulum: code 0.019 / 0.033 / 0.054 at horizons 5/10/20, vs learned
+  0.271 / 0.538 / 0.728 and persistence 0.299 / 0.537 / 0.785.
+- double pendulum: code 0.017 / 0.048 / 0.054, vs learned 0.741 / 0.882 / 1.195 and
+  persistence 0.266 / 0.686 / 1.423.
+
+The learned model is roughly at persistence at best (driven pendulum), and *worse* than
+persistence at short horizons on the chaotic system.  Code is 10-40x more accurate, and
+the gap does **not** close with horizon - even chaos stays predictable for ~20 steps.
+
+**Reading.** If the dynamics are *writable as equations*, writing them beats learning
+them - always, and cheaply.  There is no "learned world model" niche here.  This
+quantifies the intuition that motivated the whole detour: an agent that can write Python
+already has a better "car" for these tasks.
+
+**Where a learned model could still matter.**  Only when the observation does *not*
+contain enough to write the equations: hidden state, unknown parameters, partial
+observability.  That is what exp12 sets out to construct.
+
+## exp12 - where code stops winning: hidden parameters + partial observability?
+
+**Question.** exp11 said a learned model only matters when the observation cannot yield
+the equations.  So build that: a damped driven pendulum whose *(b, amp, drive)* vary per
+episode and are never observed (only `(sin theta, cos theta)` is), and race a learned
+world model against the *strongest* code baseline - "code+sysid", which fits the hidden
+parameters by gradient descent and then integrates the true equations.
+
+**Result.** The prediction was **wrong**.  code+sysid wins at every band width
+(`spread` 0.0 / 0.5 / 1.0): at horizon 10 it scores 0.031 / 0.032 / 0.042, versus the
+learned model's 0.535 / 0.466 / 0.465 and persistence's 0.577 / 0.574 / 0.566.
+
+**Reading.** Hiding the *parameters* does not stop code: fitting three numbers from a
+32-step context is easy, and the fitted integrator stays 7-20x more accurate.  So
+"unknown parameters" is not "cannot write the equations".  The only thing that would
+stop code is not knowing the *functional form* - which none of exp11/exp12 tested.
+
+**The consistent conclusion of the whole sweep.**  Across closed-form (pre-exp11),
+numerically-integrable, chaotic, and hidden-parameter/partial-observation dynamics, code
+always wins, usually by 1-2 orders of magnitude.  The learned world model sits at roughly
+the persistence baseline.  A learned model is only worth driving when the *shape* of the
+dynamics is unknown - a case that has not yet been constructed here.
 
 ## Where this leaves the search for a fix
 
@@ -184,3 +236,53 @@ objective once and for all; it is implemented and smoke-tested but not yet run.
 Every number above is regenerable: each experiment caches its raw results under
 `experiments/results/*.json` and re-runs with `--force`.  exp04 has not been run to
 completion yet; everything else has.
+
+
+---
+
+# Overall status (as of exp12)
+
+## The one thing the sweep established
+
+Across every task class we tried, **a forecaster that knows the functional form of the
+dynamics beats a forecaster that has to learn it from data**:
+
+| task class | best code | learned WM | code advantage | experiment |
+|---|---|---|---|---|
+| closed-form circle/sine | ~1e-6 (analytic) | 0.5-1.1 | ~10^6x | pre-exp11, exp10 |
+| non-chaotic, no closed form (driven pendulum) | 0.02-0.05 | 0.27-0.73 | 10-40x | exp11 |
+| chaotic (double pendulum) | 0.02-0.05 | 0.74-1.20 | 10-40x | exp11 |
+| hidden params + partial observation | 0.02-0.10 | 0.30-0.70 | 7-20x | exp12 |
+
+The learned model rarely beats the trivial persistence baseline by much, and never
+approaches code.  "Unknown parameters" is *not* enough to stop code - fitting them is
+easy; only an unknown *functional form* would.
+
+## The other things learned along the way
+
+- **Adaptation speed is not a proxy for usability.**  Adaptation AUC and one-step RMSE are
+  nearly the same axis (r=+0.93, exp03); neither predicts closed-loop imagination
+  (r=-0.59).  A model can adapt in 5 steps and still fail to imagine.
+- **Low-omega "collapse" is half artefact, half real defect.**  The baseline is very
+  strong there (linear extrapolation 0.11, exp10), *and* the model cannot hold still
+  (latent drifts 2.1x the task's motion).
+- **No setting fixes it.**  Curriculum (exp06, exp08, seed-robust), budget (exp08), the
+  training objective, and the adaptation mechanism (exp09) all fail.  0 usable cells.
+- **"A frozen LLM drives a world model" was not demonstrated.**  The one positive result
+  (exp07) did not reproduce across seeds (exp08).  The LLM, given a tool, searched no
+  better than a scripted heuristic on this task.
+- **The meta-observation.**  The most capable "car" in this whole exercise was the Python
+  interpreter the assisting model was using: it diagnosed the failures exactly, and
+  predicted the physics to 1e-6.  That is the same picture the project set out to build -
+  an intelligence extended by an external tool - already working, for these tasks.
+
+## What this means for the vision (LLM drives a learned world model)
+
+The vision is not falsified, but its **domain is much narrower than assumed**.  For any
+system whose equations an agent can *write* (even with unknown parameters), writing them
+wins, and a learned world model adds nothing worth driving.  The learned world model earns
+its keep only when the functional form is unavailable - contact/friction/plasticity,
+unknown constitutive laws, biology/markets, or the closed loop of a learned policy.  That
+is the regime any future experiment should target; everywhere else, the honest baseline is
+"write the simulator".
+
