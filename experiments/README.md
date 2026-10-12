@@ -38,6 +38,10 @@ Raw numbers are cached under `experiments/results/` so a re-run reuses them unle
 See [`FINDINGS.md`](FINDINGS.md) for the narrative, the caveats, and what it implies for
 the next step.
 
+See also [`REFLECTION.md`](REFLECTION.md) - a step-back on *why* the world-model search was
+paused: the field may be conflating the problem of intelligence with the problem of life
+(self-closure / metabolism).
+
 ## How to read these
 
 These are **leads, not results**.  The models are tiny, the tasks synthetic, and

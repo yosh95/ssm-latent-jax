@@ -286,3 +286,8 @@ unknown constitutive laws, biology/markets, or the closed loop of a learned poli
 is the regime any future experiment should target; everywhere else, the honest baseline is
 "write the simulator".
 
+---
+
+> The world-model search was **paused** on 2026-10-12.  For *why* - the argument that
+> the field may be conflating intelligence with life (self-closure, not compute) - see
+> [`REFLECTION.md`](REFLECTION.md).
