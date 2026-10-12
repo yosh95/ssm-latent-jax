@@ -12,22 +12,36 @@ NNX**: Mamba-3 selective state-space dynamics fused with a Joint-Embedding Predi
 Architecture, the LeJEPA collapse-prevention objective, and the identifiability monitors
 and meta-learning (SAI) machinery that go with them.
 
-> **Python is the primary implementation.** This package is where the algorithms are
-> developed and studied. A Rust / Burn port ([`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs))
-> and a small PyTorch port ([`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py))
-> exist for *deployment* and *cross-language comparison*; they share this codebase's
-> numerical conventions so results stay comparable, but they follow this one.
+### Where this sits in the family
+
+This project started life as a Rust world model
+([`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs), built on Burn). Rust was a
+great fit for the *deployment* end of the problem, but it turned out to be the wrong
+place to do **research**: the tight edit → run → measure loop that algorithm work needs
+was dominated by compile times and a growing `target/` tree of build artefacts, so each
+experiment cost seconds-to-minutes of pure waiting before a single number came out.
+
+So the development loop moved to Python / JAX, where the same algorithms can be
+prototyped in a notebook, differentiated and vectorised for free (`jit` / `grad` / `vmap`
+/ `lax.scan`), and checked with `pytest` in seconds. **This repository is now the
+primary implementation**: it is where the algorithms are developed, measured and
+verified, and it is the reference for the shared numerical conventions. Rust has not
+gone away — it is still the natural choice when a model has to be **shipped** (static
+binaries, no Python runtime, WASM/edge targets) — but it is a *deployment target*, not
+the place where the science happens.
 
 | Language | Repository | Role |
 |---|---|---|
-| ⚡ **JAX (this repo)** | `ssm-latent-jax` | **primary** — research, prototyping, verification |
-| 🦀 Rust (Burn) | [`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) | deployment port; includes WASM demos |
-| 🔥 PyTorch | [`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) | minimal PyTorch re-implementation of the SSM + latent predictors |
+| ⚡ **JAX / Python (this repo)** | `ssm-latent-jax` | **primary** — research, prototyping, verification |
+| 🦀 Rust / Burn | [`ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) | **deployment target** (static binaries, WASM/edge); the original implementation |
+| 🔥 PyTorch | [`ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) | minimal re-implementation of the SSM + latent predictors (cross-language comparison) |
 
-> **Why JAX / Python?** JAX gives a functional, composable core (`jit` / `grad` / `vmap` /
-> `lax.scan`) and XLA compilation, and the whole codebase is explorable in a notebook,
-> hackable in one line, and verifiable with `pytest`. The algorithms live here; the other
-> languages consume them. Shared numerical semantics are documented in
+> **Why JAX / Python for research, Rust for deployment?** JAX gives a functional,
+> composable core and XLA compilation, so an idea can go from a one-line hack to a
+> `jit`-ed, `vmap`-ed experiment without leaving the notebook, and every claim is
+> reproducible with `pytest`. Rust gives small, dependency-light binaries and predictable
+> latency, which is what you want once the model is frozen. The algorithms live here; the
+> other languages consume them. Shared numerical semantics are documented in
 > [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ---
@@ -138,7 +152,7 @@ assert jnp.allclose(y_parallel, y_step, atol=1e-5)      # ~1e-7 in practice
 ## 🧪 Tests
 
 ```bash
-pytest -q                 # 189 tests, ~3 min on 16 CPU cores
+pytest -q                 # 191 tests, ~3 min on 16 CPU cores (1 is marked `slow`)
 pytest -q -m "not slow"   # skip the longer meta-learning check
 ```
 
@@ -149,7 +163,7 @@ pytest -q -m "not slow"   # skip the longer meta-learning check
 | `test_latent.py` | 34 | loss decomposition, `stop_gradient` placement, VICReg/SIGReg properties, frozen projection buffers, checkpoint round-trip |
 | `test_monitor.py` | 29 | Theorems 1–4: rotation invariance, Procrustes, kurtosis, exploration risk levels, planning consistency |
 | `test_predictor.py` | 27 | streaming state advance, closed-loop imagination, h-sampling determinism, parameter counts, save/load |
-| `test_meta.py` | 29 | task shapes/distributions, strategy masks move **only** the intended parameters, Reptile interpolation, adaptation-speed metrics |
+| `test_meta.py` | 30 | task shapes/distributions, strategy masks move **only** the intended parameters, Reptile interpolation, adaptation-speed metrics (support and held-out query curves) |
 | `test_multimodal.py` | 8 | vision encoder/decoder shape contract, modality ablation, loss decomposition |
 | `test_data.py` | 14 | analytic derivatives of the generators, unit-circle invariants, tokenizer round-trips |
 

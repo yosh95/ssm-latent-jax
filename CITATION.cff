@@ -11,8 +11,12 @@ abstract: >-
   Predictive Architecture) latent world model. Includes multi-scale SSM stacks,
   SIGReg (LeJEPA) collapse prevention, LeJEPA identifiability monitors
   (Theorems 1-4) and a Reptile meta-learning framework for evaluating adaptation
-  speed (the SAI core metric). Rust and PyTorch ports are available for deployment
-  and cross-language comparison.
+  speed (the SAI core metric). The project began as a Rust world model, but the
+  research loop moved to Python / JAX because Rust compile times and build-artefact
+  size slowed experimentation; this repository is now the primary implementation and
+  the reference for the shared numerical conventions. The Rust (Burn) sibling remains
+  a first-class deployment target, and a minimal PyTorch sibling exists for
+  cross-language comparison.
 version: 0.1.0
 date-released: 2026-10-11
 repository-code: "https://github.com/yosh95/ssm-latent-jax"

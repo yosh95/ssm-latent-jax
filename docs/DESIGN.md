@@ -1,10 +1,15 @@
 # Design notes & shared semantics
 
-`ssm-latent-jax` is the primary reference implementation of these algorithms.
-Two sibling ports exist for deployment and cross-language comparison:
+`ssm-latent-jax` is the primary reference implementation of these algorithms,
+and the source of truth for the shared numerical conventions.  The project began
+as a Rust world model ([`yosh95/ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs),
+crate `ssm-latent-model`, built on Burn); the research loop moved to Python / JAX
+because Rust's compile times and build-artefact size made the edit → run → measure
+cycle of algorithm work too slow.  Rust remains a first-class **deployment target**;
+a minimal PyTorch sibling exists for cross-language comparison:
 
-- Rust / Burn — [`yosh95/ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) (crate `ssm-latent-model`)
-- PyTorch — [`yosh95/ssm-latent-py`](https://github.com/yosh95/ssm-latent-py)
+- Rust / Burn — [`yosh95/ssm-latent-rs`](https://github.com/yosh95/ssm-latent-rs) (crate `ssm-latent-model`) — deployment target; the original implementation
+- PyTorch — [`yosh95/ssm-latent-py`](https://github.com/yosh95/ssm-latent-py) — minimal re-implementation for comparison
 
 All three share the same numerical conventions so results stay comparable.  This
 document records those shared semantics: the module map, the conventions that are
@@ -41,6 +46,13 @@ diverges (framework idioms, correctness fixes, and out-of-scope features).
 These conventions are load-bearing for agreement across the Rust / PyTorch / JAX
 implementations.  Some of them look like odd choices; they are documented here so
 that a change is a deliberate, reviewable decision rather than an accident.
+
+> **On scan error.**  The parallel scan and the streaming step agree to
+> float32 precision in the operating regime (``|exp(dt·a_re)| <= 1``, i.e. damped
+> transitions): relative error stays ~1e-7 even at ``T = 4096``.  For *expansive*
+> transitions the absolute error grows with the sequence length and the gain — as it
+> must, since the sequential reference itself grows — so compare scans relatively,
+> not with a fixed absolute tolerance.
 
 1. **Head-wise shared `theta`.** `dt_proj` and `theta_proj` each emit `n_heads`
    values, so the rotation angle is defined per head.  Here `theta` is shaped
