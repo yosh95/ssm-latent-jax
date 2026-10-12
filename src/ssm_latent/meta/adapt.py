@@ -24,6 +24,7 @@ __all__ = [
     "strategy_path_predicate",
     "strategy_mask",
     "mask_grads",
+    "make_masked_train_step",
     "trainable_parameter_names",
 ]
 
@@ -210,6 +211,31 @@ def mask_grads(grads, mask):
     )
 
 
+def make_masked_train_step(
+    model: MultiScaleLatentPredictor,
+    optimizer,
+    keep_mask,
+    loss_weights: LossWeights,
+):
+    """Build the jitted ``(model, optimizer, obs, act) -> loss`` adaptation step.
+
+    Factored out so that :func:`inner_loop` (support-loss curve) and
+    :func:`~ssm_latent.meta.eval.adaptation_curve` (held-out query curve) share
+    *one* implementation - the two only differ in which set they score.
+    """
+
+    def loss_fn(model, obs, act):
+        return adapt_loss(model, obs, act, loss_weights)
+
+    @nnx.jit
+    def train_step(model, optimizer, obs, act):
+        loss, grads = nnx.value_and_grad(loss_fn)(model, obs, act)
+        optimizer.update(model, mask_grads(grads, keep_mask))
+        return loss
+
+    return train_step, loss_fn
+
+
 def inner_loop(
     model: MultiScaleLatentPredictor,
     task: Task,
@@ -244,19 +270,11 @@ def inner_loop(
     support_obs, support_act = task.support_set()
     query_obs, query_act = task.query_set()
 
-    def loss_fn(model, obs, act):
-        return adapt_loss(model, obs, act, loss_weights)
+    train_step, loss_fn = make_masked_train_step(model, optimizer, keep_mask, loss_weights)
 
     initial_support_loss = float(loss_fn(model, support_obs, support_act))
     initial_query_loss = float(loss_fn(model, query_obs, query_act))
     curve: list[float] = []
-
-    @nnx.jit
-    def train_step(model, optimizer, obs, act):
-        loss, grads = nnx.value_and_grad(loss_fn)(model, obs, act)
-        grads = mask_grads(grads, keep_mask)
-        optimizer.update(model, grads)
-        return loss
 
     for _ in range(inner_steps):
         loss = train_step(model, optimizer, support_obs, support_act)

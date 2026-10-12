@@ -24,6 +24,11 @@ Two execution modes are provided and are mathematically equivalent:
 
 * :meth:`SsmBlock.__call__` - Blelloch parallel scan, ``O(log T)`` depth
 * :meth:`SsmBlock.step`     - single-step, ``O(1)`` state update for streaming
+
+The ``normalize_projections`` / ``w / (‖w‖ + 1e-6)`` convention lives in
+:mod:`ssm_latent.utils`; this module deliberately no longer re-exports it (it is
+not used by the SSM itself), so there is exactly one definition to keep in sync
+with the Rust / PyTorch siblings.
 """
 
 from __future__ import annotations
@@ -35,7 +40,6 @@ import jax.numpy as jnp
 from flax import nnx
 
 from ssm_latent.config import MultiScaleSsmConfig, SsmConfig
-from ssm_latent.utils import normalize_projections  # noqa: F401  (re-export)
 
 __all__ = [
     "SsmState",

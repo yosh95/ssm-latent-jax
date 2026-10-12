@@ -21,6 +21,7 @@ from ssm_latent.meta.adapt import (
 )
 from ssm_latent.meta.eval import (
     AdaptationSpeedReport,
+    adaptation_curve,
     evaluate_adaptation_speed,
 )
 from ssm_latent.meta.tasks import (
@@ -59,6 +60,7 @@ __all__ = [
     "inner_loop",
     "adapt",
     "AdaptationSpeedReport",
+    "adaptation_curve",
     "evaluate_adaptation_speed",
     "ReptileMetaLearner",
     "MetaTrainMetrics",

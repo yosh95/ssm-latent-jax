@@ -74,15 +74,22 @@ def adaptation_curve(
     loss_weights: LossWeights = LossWeights(),
     strategy: AdaptationStrategy = AdaptationStrategy.FULL,
 ) -> list[float]:
-    """Loss on the *query* set after each of ``max_steps`` adaptation steps.
+    """Held-out (query) loss after each of ``max_steps`` adaptation steps.
 
-    Unlike :func:`~ssm_latent.meta.adapt.inner_loop` (which records the support
-    loss), this evaluates generalisation at every step, which is what the SAI
-    metric really cares about.
+    This is the query-side twin of
+    :func:`~ssm_latent.meta.adapt.inner_loop`: the *support* set drives the
+    updates while the *query* set is scored, because the SAI metric is about
+    generalisation speed, not how far the optimiser moves on the support set.
+
+    ``model`` is adapted **in place**; pass :func:`flax.nnx.clone` if you need to
+    keep the original.  Both this and
+    :func:`~ssm_latent.meta.adapt.inner_loop` share one jitted stepping routine
+    (:func:`~ssm_latent.meta.adapt.make_masked_train_step`), so they can never
+    drift apart.
     """
     import optax
 
-    from ssm_latent.meta.adapt import adapt_loss, mask_grads, strategy_mask
+    from ssm_latent.meta.adapt import make_masked_train_step, strategy_mask
 
     strategy = AdaptationStrategy(strategy)
     keep_mask = strategy_mask(model, strategy)
@@ -91,14 +98,7 @@ def adaptation_curve(
     support_obs, support_act = task.support_set()
     query_obs, query_act = task.query_set()
 
-    def loss_fn(model, obs, act):
-        return adapt_loss(model, obs, act, loss_weights)
-
-    @nnx.jit
-    def train_step(model, optimizer, obs, act):
-        loss, grads = nnx.value_and_grad(loss_fn)(model, obs, act)
-        optimizer.update(model, mask_grads(grads, keep_mask))
-        return loss
+    train_step, loss_fn = make_masked_train_step(model, optimizer, keep_mask, loss_weights)
 
     curve = []
     for _ in range(max_steps):
