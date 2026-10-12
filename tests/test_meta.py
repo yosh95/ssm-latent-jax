@@ -21,6 +21,7 @@ from ssm_latent.meta import (
     SineWaveTask,
     adapt,
     adapt_loss,
+    adaptation_curve,
     adaptation_strategy_description,
     evaluate_adaptation_speed,
     inner_loop,
@@ -243,6 +244,8 @@ def test_loss_weights_are_honoured():
 # adaptation-speed report
 # --------------------------------------------------------------------------- #
 def test_adaptation_speed_report_from_curve_statistics():
+    # NOTE: `evaluate_adaptation_speed` feeds this the *support* loss curve
+    # (what `inner_loop` optimises); `adaptation_curve()` is the query-side twin.
     curve = [1.0, 0.5, 0.25, 0.01, 0.005]
     report = AdaptationSpeedReport.from_curve(curve, threshold=0.05)
     assert report.steps_to_success == 4  # 1-indexed
@@ -255,6 +258,25 @@ def test_adaptation_speed_report_from_curve_statistics():
         0.5 * (1.0 + 0.5) + 0.5 * (0.5 + 0.25) + 0.5 * (0.25 + 0.01) + 0.5 * (0.01 + 0.005)
     ) / 5
     assert report.adaptation_auc == pytest.approx(expected_auc, rel=1e-5)
+
+
+def test_adaptation_curve_is_the_query_side_twin_of_evaluate():
+    """`adaptation_curve` scores the *held-out* loss at every step.
+
+    It is the query-side twin of :func:`evaluate_adaptation_speed` (which scores
+    the support curve the inner loop optimises).  On a deterministic task both
+    must agree that adaptation generalises: the query loss falls as the model
+    specialises.
+    """
+    model = _model()
+    task = CircleWorldTask(omega=1.0, noise_level=0.0, n_support=16, n_query=32, batch_size=4)
+    curve = adaptation_curve(model, task, inner_lr=1e-2, max_steps=6)
+    assert len(curve) == 6
+    assert all(v >= 0.0 for v in curve)
+    assert curve[-1] < curve[0], f"query loss must fall over adaptation, got {curve}"
+
+    report = evaluate_adaptation_speed(model, task, inner_lr=1e-2, max_steps=6)
+    assert report.final_loss < report.adaptation_curve[0]
 
 
 def test_adaptation_speed_report_defaults_are_safe():
@@ -280,9 +302,6 @@ def test_evaluate_adaptation_speed_runs_and_reports_reasonably():
 def test_evaluate_adaptation_speed_leaves_the_model_unchanged():
     model = _model()
     before = jnp.array(model.ssm.layers[0].a_re[...])
-    evaluate_adaptation_speed(
-        CircleWorldTask(n_support=8, n_query=8, batch_size=2), model, max_steps=2
-    ) if False else None
     evaluate_adaptation_speed(
         model, CircleWorldTask(n_support=8, n_query=8, batch_size=2), max_steps=2
     )

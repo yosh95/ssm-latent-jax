@@ -31,8 +31,13 @@ def test_make_projections_are_unit_norm_and_frozen():
     w = make_projections(16, 8, seed=0)
     assert w.shape == (16, 8)
     assert_close(jnp.linalg.norm(w, axis=0), jnp.ones(8), atol=1e-5)
-    # the buffer must not carry a gradient
-    assert not hasattr(w, "aval") or True  # plain array, nothing to check structurally
+    # A plain array (not an nnx.Variable), and seed-deterministic.
+    assert isinstance(w, jnp.ndarray)
+    assert_close(w, make_projections(16, 8, seed=0), atol=0.0)
+    assert not jnp.allclose(w, make_projections(16, 8, seed=1))
+    # The "frozen" / non-trainable guarantee is enforced where it matters: the
+    # predictors register this as a `Buffer`, so `wrt=nnx.Param` never sees it.
+    # That behaviour is covered by `test_stability_projections_are_not_trained`.
 
 
 def test_normalize_projections_matches_reference_formula():
