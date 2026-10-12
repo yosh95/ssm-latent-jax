@@ -84,6 +84,25 @@ that a change is a deliberate, reviewable decision rather than an accident.
 | **No `Dropout` in `MlpEncoder`.** | Dropout is a no-op at inference and would break test determinism; the flag is kept only for API stability. |
 | **`MultiScaleMambaPredictor.step_imagine` validates its input width.** | It is fed a `d_model`-wide SSM output, not the decoded prediction; the check turns a silent numerical drift into a clear exception. |
 
+## Known pitfalls (and how they are handled)
+
+A few sharp edges that a reader (or a future refactor) should not have to rediscover:
+
+- **Single-step sequences.** With ``T = 1`` there is no ``(t, t+1)`` pair, so the
+  next-step prediction term of every loss is *vacuous*.  It is computed through
+  :func:`ssm_latent.utils.mean_squared_error_or_zero`, which returns ``0`` rather
+  than letting ``(...).mean()`` produce ``NaN`` (``0/0``) and poison the loss.
+  This matters for streaming / single-frame inference, not just for tidiness.
+- **No ``dropout`` knob.** Dropout is a no-op at inference and would break test
+  determinism, so it is deliberately **not** offered on the configs (see
+  :class:`ssm_latent.config.MultiScaleSsmConfig`).  There is no silently-ignored
+  field to trip over.
+- **Actions are never silently dropped.** An action-conditioned predictor
+  (``action_dim > 0``) raises on ``forward(obs, None)`` and on ``step(z, None, …)``
+  instead of quietly falling back to the unconditioned path.
+- **The inner adaptation loop is deterministic** (it has no ``seed``); its only
+  randomness is the task data itself.
+
 ## Out of scope / not implemented here
 
 - ONNX text embeddings (`src/preprocess.rs` in the Rust port).

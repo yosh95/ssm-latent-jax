@@ -152,18 +152,18 @@ assert jnp.allclose(y_parallel, y_step, atol=1e-5)      # ~1e-7 in practice
 ## 🧪 Tests
 
 ```bash
-pytest -q                 # 191 tests, ~3 min on 16 CPU cores (1 is marked `slow`)
+pytest -q                 # 196 tests, ~3 min on 16 CPU cores (1 is marked `slow`)
 pytest -q -m "not slow"   # skip the longer meta-learning check
 ```
 
 | Suite | Tests | What it guarantees |
 |---|---:|---|
-| `test_config.py` | 15 | every `SsmConfig` validation rule and its error message |
+| `test_config.py` | 16 | every `SsmConfig` validation rule and its error message |
 | `test_ssm.py` | 34 | parallel ≡ step ≡ `lax.scan`; conv causality; state shapes; damping/rotation init; JIT + grad + vmap composition |
-| `test_latent.py` | 34 | loss decomposition, `stop_gradient` placement, VICReg/SIGReg properties, frozen projection buffers, checkpoint round-trip |
+| `test_latent.py` | 36 | loss decomposition, `stop_gradient` placement, VICReg/SIGReg properties, frozen projection buffers, single-step (vacuous, non-NaN) losses, checkpoint round-trip |
 | `test_monitor.py` | 29 | Theorems 1–4: rotation invariance, Procrustes, kurtosis, exploration risk levels, planning consistency |
-| `test_predictor.py` | 27 | streaming state advance, closed-loop imagination, h-sampling determinism, parameter counts, save/load |
-| `test_meta.py` | 30 | task shapes/distributions, strategy masks move **only** the intended parameters, Reptile interpolation, adaptation-speed metrics (support and held-out query curves) |
+| `test_predictor.py` | 28 | streaming state advance, closed-loop imagination, h-sampling determinism, parameter counts, save/load |
+| `test_meta.py` | 31 | task shapes/distributions, strategy masks move **only** the intended parameters, Reptile interpolation, adaptation-speed metrics (support and held-out query curves) |
 | `test_multimodal.py` | 8 | vision encoder/decoder shape contract, modality ablation, loss decomposition |
 | `test_data.py` | 14 | analytic derivatives of the generators, unit-circle invariants, tokenizer round-trips |
 

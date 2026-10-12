@@ -198,6 +198,14 @@ def test_inner_loop_reduces_the_support_loss():
     assert result.adaptation_time_ms >= 0.0
 
 
+def test_inner_loop_has_no_seed_parameter():
+    """The inner loop is deterministic (`seed` used to be accepted and ignored)."""
+    import inspect
+
+    params = inspect.signature(inner_loop).parameters
+    assert "seed" not in params
+
+
 def test_inner_loop_with_zero_lr_does_not_move_but_still_reports():
     model = _model()
     before = nnx.to_pure_dict(nnx.state(model, nnx.Param))

@@ -21,7 +21,7 @@ from ssm_latent.latent import (
     stability_loss,
     stability_loss_running,
 )
-from ssm_latent.utils import normalize_projections
+from ssm_latent.utils import mean_squared_error_or_zero, normalize_projections
 
 
 # --------------------------------------------------------------------------- #
@@ -249,6 +249,36 @@ def test_latent_loss_targets_are_stop_gradiented():
         )
 
     assert float(jnp.max(jnp.abs(jax.grad(recon_only)(args.z)))) > 0.0
+
+
+def test_single_step_sequence_is_vacuous_not_nan():
+    """A seq_len=1 batch has no (t, t+1) pair: the prediction term must be 0, not NaN.
+
+    Regression test: `(...).mean()` over the empty slice returned NaN and poisoned
+    the whole loss, which is exactly what streaming / single-frame inference hits.
+    """
+    cfg = SsmConfig(d_model=8, d_state=4, expand=2, n_heads=2, mimo_rank=1)
+    model = LatentPredictor(cfg, 2, 2, rngs=nnx.Rngs(0))
+    obs = jnp.ones((2, 1, 2))
+    act = jnp.ones((2, 1, 2))
+    z, pred_z, recon_x, pred_x = model(obs, act)
+    loss = model.loss(LatentLossArgs(z, pred_z, recon_x, pred_x, obs, stability_weight=0.0))
+    assert jnp.isfinite(loss), f"seq_len=1 loss must be finite, got {loss}"
+
+    w = make_projections(8, 4)
+    assert jnp.isfinite(lejepa_loss(jnp.ones((2, 1, 8)), jnp.ones((2, 1, 8)), w))
+
+    # the helper itself: empty -> 0, non-empty -> ordinary MSE
+    assert float(mean_squared_error_or_zero(jnp.zeros((0, 3)))) == 0.0
+    assert_close(mean_squared_error_or_zero(jnp.array([1.0, -1.0])), 1.0, atol=1e-6)
+
+
+def test_multiscale_predictor_step_requires_an_action_when_conditioned():
+    """`step` must not silently drop the control input of an action-conditioned model."""
+    cfg = MultiScaleSsmConfig(d_model=8, d_state=4, expand=2, n_heads=2, mimo_rank=1, n_layers=2)
+    model = MultiScaleLatentPredictor(cfg, 3, 2, rngs=nnx.Rngs(0))
+    with pytest.raises(ValueError, match="action conditioning"):
+        model.step(jnp.zeros((1, 8)), None, model.zero_state(1))
 
 
 # --------------------------------------------------------------------------- #

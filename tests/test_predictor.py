@@ -85,6 +85,13 @@ def test_mamba_predictor_training_reduces_loss():
     assert last < first, f"{first} -> {last}"
 
 
+def test_predictor_loss_on_a_single_step_is_zero_not_nan():
+    """One step means no prediction/target pair -> the loss is 0, not NaN."""
+    one = jnp.ones((2, 1, 2))
+    assert float(MambaPredictor.loss(one, one)) == 0.0
+    assert float(MultiScaleMambaPredictor.loss(one, one)) == 0.0
+
+
 def test_mamba_predictor_backward_flow():
     cfg = SsmConfig(d_model=8, d_state=4, expand=2, n_heads=2, mimo_rank=1, use_conv=True)
     model = MambaPredictor(cfg, 2, 2, rngs=nnx.Rngs(0))

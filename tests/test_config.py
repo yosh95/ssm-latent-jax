@@ -70,6 +70,13 @@ def test_multiscale_timescale_ranges():
     assert cfg.timescale_range(3) == cfg.timescale_range(2)
 
 
+def test_multiscale_has_no_dropout_field():
+    """`dropout` was an unused, silently-ignored knob and has been removed."""
+    cfg = MultiScaleSsmConfig(d_model=8, d_state=4, expand=2, n_heads=2, mimo_rank=1, n_layers=2)
+    assert not hasattr(cfg, "dropout")
+    assert "dropout" not in cfg.to_dict()
+
+
 def test_to_dict_roundtrip():
     cfg = MultiScaleSsmConfig(d_model=8, d_state=4, expand=2, n_heads=2, mimo_rank=1, n_layers=2)
     d = cfg.to_dict()
