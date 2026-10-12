@@ -147,8 +147,10 @@ def main() -> None:
             row.append(f"{name}={rmse(pred, truth):.4f}")
         print("  ".join(row))
     print("  note: a JEPA model trained one step ahead has no mechanism against")
-    print("  exposure bias, so closed-loop drift is expected.  See")
-    print("  MultiScaleMambaPredictor.forward_with_h_sampling for the remedy.")
+    print("  exposure bias, so closed-loop drift is expected.")
+    print("  MultiScaleMambaPredictor.forward_with_h_sampling is one candidate remedy,")
+    print("  but experiments/02_h_sampling_remedy.py does NOT find it helping here: in")
+    print("  our runs it made both one-step and closed-loop error worse.")
 
     section("latent trajectory straightness (temporal straightening)")
     z_multi = multi(obs, act)[0]
