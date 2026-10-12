@@ -244,13 +244,12 @@ def inner_loop(
     inner_steps: int = 5,
     strategy: AdaptationStrategy = AdaptationStrategy.FULL,
     loss_weights: LossWeights = LossWeights(),
-    seed: int = 0,
 ) -> tuple[MultiScaleLatentPredictor, AdaptationResult]:
-    """Adapt a copy of ``model`` to ``task`` with ``inner_steps`` of Adam.
+    """Adapt ``model`` to ``task`` with ``inner_steps`` of Adam.
 
-    Parameters are updated in-place through the model's NNX state (so no model
-    reconstruction is needed) and only the subset selected by ``strategy``
-    receives gradients.
+    The inner loop is deterministic (its only randomness is the task's own data),
+    so there is no ``seed``; parameter updates happen in-place through the model's
+    NNX state and only the subset selected by ``strategy`` receives gradients.
 
     Returns
     -------

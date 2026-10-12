@@ -119,7 +119,10 @@ class MultiScaleSsmConfig(SsmConfig):
     """
 
     n_layers: int = 3
-    dropout: float = 0.0
+    # No `dropout` field on purpose: dropout is a no-op at inference and would
+    # make the tests non-deterministic, so it is simply not offered (the MLP
+    # encoder documents the same choice).  Add it only together with a real
+    # train/eval split and a deterministic test story.
 
     def validate(self) -> MultiScaleSsmConfig:
         if self.n_layers == 0:
@@ -145,5 +148,5 @@ class MultiScaleSsmConfig(SsmConfig):
 
     def to_dict(self) -> dict:
         d = super().to_dict()
-        d.update({"n_layers": self.n_layers, "dropout": self.dropout})
+        d.update({"n_layers": self.n_layers})
         return d
