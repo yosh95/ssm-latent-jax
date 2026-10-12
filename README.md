@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/yosh95/ssm-latent-jax/actions/workflows/ci.yml/badge.svg)](https://github.com/yosh95/ssm-latent-jax/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11%E2%80%933.14](https://img.shields.io/badge/python-3.11%E2%80%933.14-blue.svg)](https://www.python.org)
+[![Python 3.11–3.14](https://img.shields.io/badge/python-3.11%E2%80%933.14-blue.svg)](https://www.python.org)
 [![JAX](https://img.shields.io/badge/JAX-%2BFlax%20NNX-9cf.svg)](https://github.com/google/jax)
 
 A **Python-first research toolkit** for JEPA latent world models, built on **JAX / Flax
@@ -51,9 +51,10 @@ and meta-learning (SAI) machinery that go with them.
 ```bash
 git clone https://github.com/yosh95/ssm-latent-jax
 cd ssm-latent-jax
-python -m venv .venv && source .venv/bin/activate
+python3.14 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"        # CPU JAX; use ".[cuda]" for CUDA 12
-# requires Python >= 3.11, < 3.15 (flax >= 0.11 for `nnx.List`)
+# requires Python 3.11-3.14: on 3.15+ `pip install` refuses outright
+# (see the note below). flax >= 0.11 is needed for `nnx.List`.
 ```
 
 Using [`uv`](https://docs.astral.sh/uv/) (which reads `.python-version`, so the
@@ -63,10 +64,12 @@ interpreter is picked for you):
 uv venv && uv pip install -e ".[dev]"     # or: uv sync, if you keep a lockfile
 ```
 
-> **Python version.** `requires-python` is `>=3.11,<3.15`. `flax` pulls in
-> `tensorstore`, which publishes wheels up to **cp314** only; on Python 3.15+ uv
-> falls back to a Bazel source build of `tensorstore` that fails. Pin 3.11–3.14
-> (`.python-version` says 3.14).
+> **Python version.** `requires-python` is `>=3.11,<3.15` and `.python-version`
+> pins **3.14** (uv respects it, so `uv venv` picks the right interpreter for you).
+> `flax` depends on `orbax-checkpoint` -> `tensorstore`, and `tensorstore` ships
+> wheels only up to **cp314**. On 3.15 there is no wheel, the sdist falls back to a
+> Bazel build, and that build fails (`PyWeakref_GET_OBJECT` was removed in 3.15).
+> **Use 3.14**, or older: 3.11 / 3.12 / 3.13 are equally supported.
 
 or, without installing:
 
