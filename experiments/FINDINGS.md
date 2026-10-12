@@ -117,6 +117,39 @@ LLM may have found a *stable* setting rather than an *accurate* one.  Unverified
 **Meta-lesson.** exp07's positive claim was a single-seed artefact.  Recorded here on
 purpose: this is why exp08 existed.
 
+## exp09 - do the *mechanism* levers (objective, adaptation) fix the breakdown?
+
+**Question.** Settings search (curriculum, budget) hit a ceiling, so change the two
+things that could actually be the cause: the objective (one-step vs. closed-loop
+"rollout" training) and the adaptation mechanism (gradient steps vs. a weight-free
+state warm-up).  2x2 grid, 2 seeds.
+
+**Result.** **No lever helps.**  Against the baseline (oneshot + weight, mean OOD
+-0.160): oneshot+warmup -0.278, rollout+weight **-0.438** (and it *breaks in-range too*:
+-0.04, -0.18), rollout+warmup -0.284.  Usable cells: **0/8**.
+
+**Reading.** Training for the thing we measure (imagination) makes out-of-range
+*worse*, not better - fitting the closed loop on the in-range data buys overfitting,
+not generalisation.  The breakdown is not a loss-design problem.
+
+## exp10 - is the breakdown the model's fault, or the baseline's?  (diagnosis)
+
+**Question.** At omega=0.25 the point barely moves, so "repeat the last frame" should
+be nearly correct.  Is "the model loses to persistence" even a meaningful failure?
+
+**Result.**  Two things are true at once:
+- **The baseline is very strong at low omega.**  persistence RMSE 0.32 and *linear*
+  extrapolation (continue the last velocity) **0.11** at omega=0.25, vs the model's
+  0.70.  So that headline overstates the failure: the task is nearly straight-line,
+  and even a trivial extrapolator wins.
+- **The model has a real defect.**  Its latent rollout error (0.79) is **2.1x** the
+  true latent's travel (0.38) at omega=0.25 - the model *cannot hold still*: it drifts
+  more than the task moves (err/travel = 0.46 in-range, 2.11 at omega=0.25).
+
+**Reading.** Part of the "OOD collapse" is an evaluation artefact (a too-strong
+baseline on an easy task); part is a genuine failure to stop.  Any comparison should
+report both the persistence *and* the linear baseline, and a "hold-still" error.
+
 ---
 
 ## Where this leaves the "LLM drives a world model" picture
@@ -126,16 +159,28 @@ purpose: this is why exp08 existed.
 | A few adaptation steps can push a pretrained model out of its prior (loose loop works at all) | **Weak yes** (exp05, omega=0.25, both seeds) |
 | Tuning the *curriculum* or *budget* fixes out-of-range imagination | **No** (exp06, exp08, seed-robust) |
 | A frozen LLM, given a tool, can search better than a scripted heuristic | **Unproven** - the one positive result did not reproduce (exp07 vs exp08) |
-| The closed-loop breakdown is a property of the objective/mechanism, not the settings | **Hypothesis** - the settings search hit a ceiling (usable = 0 cells), which points here |
+| Changing the objective / adaptation mechanism fixes it | **No** (exp09 - rollout training made it worse; 0/8 usable cells) |
+| The breakdown is (partly) an evaluation artefact | **Yes** (exp10 - a linear extrapolation reaches 0.11 at omega=0.25 vs the model's 0.70) |
+| The model has a genuine defect | **Yes** (exp10 - it drifts 2.1x more than the task moves at omega=0.25; it cannot hold still) |
 
-**Implication for (B).**  The search space we handed the LLM (curriculum, k) is the
-wrong one - it cannot fix the breakdown.  (B) should hand the LLM variables that act
-on the *cause*: the adaptation objective (one-step vs. rollout-aware) and the
-adaptation mechanism (weight update vs. latent conditioning).  exp04 is the first
-half of that.
+## Where this leaves the search for a fix
+
+Neither the *settings* (exp06, exp08) nor the *mechanism* (exp09) moves the needle, and
+exp10 shows the low-omega failure is half evaluation artefact, half a real "won't hold
+still" defect.  So the next lever is not another knob on the training loop - it is
+either
+
+  * the **task / evaluation design** (report a linear-extrapolation baseline and a
+    hold-still error; low omega is close to trivial), or
+  * the **architecture / data** (the model cannot represent "stop", which may be an
+    initialisation or timescale problem - cf. exp03, where the *bigger* d_model did
+    worse out of range).
+
+exp04 (objective ablation at full scale) is still the clean way to rule out the
+objective once and for all; it is implemented and smoke-tested but not yet run.
 
 ## Reproduce
 
 Every number above is regenerable: each experiment caches its raw results under
 `experiments/results/*.json` and re-runs with `--force`.  exp04 has not been run to
-completion yet.
+completion yet; everything else has.

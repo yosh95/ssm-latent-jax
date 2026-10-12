@@ -30,6 +30,8 @@ Raw numbers are cached under `experiments/results/` so a re-run reuses them unle
 | `06_llm_driver.py` | A frozen LLM picks a training curriculum in one shot. | **No better than the obvious human heuristic.** default -0.268, wide -0.252, LLM one-shot -0.289. The LLM reinvents "include the extremes". |
 | `07_llm_agent.py` | The LLM *runs* trials via a `run_trial` tool and revises. | On seed 0 it found the `k` lever and beat `wide` (-0.151 vs -0.252). **Did not survive exp08.** |
 | `08_k_robustness.py` | Is exp07's `k=10` finding robust across seeds? | **No.**  k=10>k=5 in 2/3 seeds; beating `wide` in 1/3. All cells negative. exp07 was a single-seed artefact. |
+| `09_mechanism_ablation.py` | Do the *mechanism* levers (rollout objective, state warm-up) fix the breakdown? | **No.** 0/8 usable cells; rollout training made out-of-range *worse* (-0.44) and broke in-range too. |
+| `10_baseline_diagnosis.py` | Is the breakdown the model's fault or a too-strong baseline? | **Both.**  At omega=0.25 a *linear extrapolation* scores 0.11 vs the model's 0.70 (easy baseline), but the model's latent drifts 2.1x more than the task moves - it cannot hold still. |
 
 See [`FINDINGS.md`](FINDINGS.md) for the narrative, the caveats, and what it implies for
 the next step.

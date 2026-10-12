@@ -1,0 +1,106 @@
+[
+ {
+  "objective": "oneshot",
+  "adapt": "weight",
+  "seed": 0,
+  "in_range_gain": 0.26866936683654785,
+  "mean_ood_gain": -0.10703782737255096,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": 0.26866936683654785,
+   "0.25": -0.15616902709007263,
+   "3.0": -0.0579066276550293
+  }
+ },
+ {
+  "objective": "oneshot",
+  "adapt": "weight",
+  "seed": 1,
+  "in_range_gain": 0.18872004747390747,
+  "mean_ood_gain": -0.21351978182792664,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": 0.18872004747390747,
+   "0.25": -0.08698934316635132,
+   "3.0": -0.34005022048950195
+  }
+ },
+ {
+  "objective": "oneshot",
+  "adapt": "warmup",
+  "seed": 0,
+  "in_range_gain": 0.3099448084831238,
+  "mean_ood_gain": -0.3163909614086151,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": 0.3099448084831238,
+   "0.25": -0.7546139359474182,
+   "3.0": 0.12183201313018799
+  }
+ },
+ {
+  "objective": "oneshot",
+  "adapt": "warmup",
+  "seed": 1,
+  "in_range_gain": 0.23227131366729736,
+  "mean_ood_gain": -0.23945745825767517,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": 0.23227131366729736,
+   "0.25": -0.3811182379722595,
+   "3.0": -0.09779667854309082
+  }
+ },
+ {
+  "objective": "rollout",
+  "adapt": "weight",
+  "seed": 0,
+  "in_range_gain": -0.036228179931640625,
+  "mean_ood_gain": -0.4604671895503998,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": -0.036228179931640625,
+   "0.25": -0.2510119080543518,
+   "3.0": -0.6699224710464478
+  }
+ },
+ {
+  "objective": "rollout",
+  "adapt": "weight",
+  "seed": 1,
+  "in_range_gain": -0.17603325843811035,
+  "mean_ood_gain": -0.4148560166358948,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": -0.17603325843811035,
+   "0.25": -0.19481849670410156,
+   "3.0": -0.634893536567688
+  }
+ },
+ {
+  "objective": "rollout",
+  "adapt": "warmup",
+  "seed": 0,
+  "in_range_gain": 0.15444022417068481,
+  "mean_ood_gain": -0.2919832170009613,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": 0.15444022417068481,
+   "0.25": -0.212169349193573,
+   "3.0": -0.3717970848083496
+  }
+ },
+ {
+  "objective": "rollout",
+  "adapt": "warmup",
+  "seed": 1,
+  "in_range_gain": 0.20980298519134521,
+  "mean_ood_gain": -0.27523893117904663,
+  "usable_ood": false,
+  "per_target": {
+   "1.2": 0.20980298519134521,
+   "0.25": -0.24624311923980713,
+   "3.0": -0.30423474311828613
+  }
+ }
+]

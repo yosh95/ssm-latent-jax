@@ -1,0 +1,42 @@
+[
+ {
+  "omega": 0.25,
+  "model_rmse": 0.7047427892684937,
+  "persistence_rmse": 0.32402127981185913,
+  "linear_rmse": 0.11058452725410461,
+  "latent_rollout_err": 0.7943335771560669,
+  "latent_travel": 0.3766503632068634
+ },
+ {
+  "omega": 0.5,
+  "model_rmse": 0.5925087928771973,
+  "persistence_rmse": 0.6186385750770569,
+  "linear_rmse": 0.42471131682395935,
+  "latent_rollout_err": 0.6695281863212585,
+  "latent_travel": 0.7182424068450928
+ },
+ {
+  "omega": 1.2,
+  "model_rmse": 0.5078911185264587,
+  "persistence_rmse": 1.1029185056686401,
+  "linear_rmse": 1.8894507884979248,
+  "latent_rollout_err": 0.5915000438690186,
+  "latent_travel": 1.2833210229873657
+ },
+ {
+  "omega": 2.0,
+  "model_rmse": 0.9889097213745117,
+  "persistence_rmse": 1.0233063697814941,
+  "linear_rmse": 3.1192548274993896,
+  "latent_rollout_err": 1.0622349977493286,
+  "latent_travel": 1.1893998384475708
+ },
+ {
+  "omega": 3.0,
+  "model_rmse": 1.0668296813964844,
+  "persistence_rmse": 1.0261082649230957,
+  "linear_rmse": 4.106801986694336,
+  "latent_rollout_err": 1.2117977142333984,
+  "latent_travel": 1.1933082342147827
+ }
+]
